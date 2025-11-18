@@ -1,28 +1,28 @@
 import React, { useEffect, useState } from "react";
-
-interface Category {
-  id?: string;
-  name: string;
-  priceCents: number;
-}
+import {
+  createCategory,
+  deleteCategory,
+  getCategories,
+  updateCategory,
+  type SeatCategory,
+} from "../api/categories";
 
 interface CategoriesManagementProps {
   token: string;
 }
 
-export default function CategoriesManagement({ token }: CategoriesManagementProps) {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [editing, setEditing] = useState<Category | null>(null);
+export default function CategoriesManagement({
+  token,
+}: CategoriesManagementProps) {
+  const [categories, setCategories] = useState<SeatCategory[]>([]);
+  const [editing, setEditing] = useState<CategoryFormSchema | null>(null);
 
   // Загрузка категорий
   const fetchCategories = async () => {
     if (!token) return;
     try {
-      const res = await fetch(`http://91.142.94.183:8080/seat-categories?page=0&size=20`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      setCategories(data.data || []);
+      const { data } = await getCategories(token, { page: 0, size: 20 });
+      setCategories(data);
     } catch (err) {
       console.error("Ошибка загрузки категорий:", err);
     }
@@ -33,25 +33,17 @@ export default function CategoriesManagement({ token }: CategoriesManagementProp
   }, [token]);
 
   // Создание / редактирование категории
-  const handleSave = async (cat: Category) => {
+  const handleSave = async (cat: CategoryFormSchema) => {
     if (!token) return;
-    if (!cat.name.trim()) return alert("Введите название категории");
-    if (cat.priceCents <= 0) return alert("Цена должна быть больше 0");
+    if (!cat.name?.trim()) return alert("Введите название категории");
+    if ((cat.priceCents ?? 0) <= 0) return alert("Цена должна быть больше 0");
 
     try {
-      const method = cat.id ? "PUT" : "POST";
-      const url = cat.id
-        ? `http://91.142.94.183:8080/seat-categories/${cat.id}`
-        : `http://91.142.94.183:8080/seat-categories`;
-
-      await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(cat),
-      });
+      if (cat.id) {
+        await updateCategory(token, cat.id, cat);
+      } else {
+        await createCategory(token, cat);
+      }
 
       await fetchCategories();
       setEditing(null);
@@ -61,15 +53,11 @@ export default function CategoriesManagement({ token }: CategoriesManagementProp
     }
   };
 
-
   const handleDelete = async (id: string) => {
     if (!token || !window.confirm("Удалить эту категорию?")) return;
 
     try {
-      await fetch(`http://91.142.94.183:8080/seat-categories/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await deleteCategory(token, id);
       setCategories(categories.filter((c) => c.id !== id));
     } catch (err) {
       console.error(err);
@@ -126,9 +114,15 @@ export default function CategoriesManagement({ token }: CategoriesManagementProp
   );
 }
 
+interface CategoryFormSchema {
+  id?: string;
+  name: string;
+  priceCents: number;
+}
+
 interface CategoryFormProps {
-  category: Category;
-  onSave: (cat: Category) => void;
+  category: CategoryFormSchema;
+  onSave: (cat: CategoryFormSchema) => void;
   onCancel: () => void;
 }
 
@@ -141,7 +135,10 @@ function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: name === "priceCents" ? Number(value) * 100 : value });
+    setForm({
+      ...form,
+      [name]: name === "priceCents" ? Number(value) * 100 : value,
+    });
   };
 
   return (
@@ -161,7 +158,7 @@ function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) {
         name="priceCents"
         type="number"
         placeholder="Цена (₽)"
-        value={form.priceCents }
+        value={form.priceCents}
         onChange={handleChange}
       />
 

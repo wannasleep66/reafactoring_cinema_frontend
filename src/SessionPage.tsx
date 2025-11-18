@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { getSessionById, getHallPlan } from "./api/session";
+import { getSession } from "./api/session";
+import { getHall } from "./api/halls";
 
 interface Props {
   sessionId: string;
@@ -35,9 +36,9 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const session = await getSessionById(sessionId);
-        const planData = await getHallPlan(session.hallId);
-        setPlan(planData);
+        const session = await getSession(sessionId);
+        const planData = await getHall(session.hallId);
+        setPlan({ ...planData.plan, hallId: planData.id });
       } catch (err) {
         console.error("Ошибка загрузки данных:", err);
       } finally {
@@ -71,8 +72,11 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
     );
   }
 
-  const rows = Array.from(new Set(plan.seats.map((s) => s.row))).sort((a, b) => a - b);
-  const getCategory = (catId: string) => plan.categories.find((c) => c.id === catId);
+  const rows = Array.from(new Set(plan.seats.map((s) => s.row))).sort(
+    (a, b) => a - b
+  );
+  const getCategory = (catId: string) =>
+    plan.categories.find((c) => c.id === catId);
 
   const totalPrice = selectedSeats.reduce((sum, id) => {
     const seat = plan.seats.find((s) => s.id === id);
@@ -88,9 +92,14 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
           ← Назад
         </button>
 
-        <h2 className="text-center text-primary mb-4">Схема зала — Зал {plan.hallId}</h2>
+        <h2 className="text-center text-primary mb-4">
+          Схема зала — Зал {plan.hallId}
+        </h2>
 
-        <div className="d-flex flex-column align-items-center mb-4" style={{ gap: "10px" }}>
+        <div
+          className="d-flex flex-column align-items-center mb-4"
+          style={{ gap: "10px" }}
+        >
           {rows.map((rowNum) => {
             const rowSeats = plan.seats
               .filter((s) => s.row === rowNum)
