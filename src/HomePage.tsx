@@ -8,7 +8,6 @@ let globalLoadingState = false;
 export default function HomePage() {
   const [films, setFilms] = useState<movieApi.Film[]>([]);
   const [selectedFilm, setSelectedFilm] = useState<movieApi.Film | null>(null);
-  const [cachedFilms, setCachedFilms] = useState<movieApi.Film[]>([]);
   const [viewCount, setViewCount] = useState(0);
 
   useEffect(() => {
@@ -18,7 +17,6 @@ export default function HomePage() {
       .getFilms()
       .then((filmsData) => {
         setFilms(filmsData);
-        setCachedFilms(filmsData);
         globalLoadingState = false;
 
         setViewCount((prev) => prev + 1);

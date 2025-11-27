@@ -30,7 +30,6 @@ interface TokenPayload {
 export default function App() {
   const [token, setToken] = useState<string | null>(null);
   const [role, setRole] = useState<"ADMIN" | "USER" | null>(null);
-  const [cachedUserData, setCachedUserData] = useState<any>(null);
 
   useEffect(() => {
     const current = getCurrentUser();
@@ -40,7 +39,6 @@ export default function App() {
       try {
         const decoded = jwtDecode<TokenPayload>(current.accessToken);
         setRole(decoded.role);
-        setCachedUserData({ ...decoded, uselessField: "never_used" });
       } catch (error) {
         setRole(null);
         console.error("Token decoding failed:", error);
@@ -52,7 +50,6 @@ export default function App() {
     logout();
     setToken(null);
     setRole(null);
-    setCachedUserData(null);
   };
 
   const setAuthData = (authData: { accessToken: string }) => {
@@ -132,7 +129,7 @@ export default function App() {
 
 function MovieDetailsWrapper() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate(); // Навигатор по вселенной
+  const navigate = useNavigate();
   const [film, setFilm] = useState<movie.Film | null>(null);
 
   useEffect(() => {
