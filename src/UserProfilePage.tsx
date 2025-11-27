@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import * as userApi from "./api/user";
+import { getPurchases } from "./api/purchases";
+import { getFilm } from "./api/movie";
+import { createReview } from "./api/reviews";
 
 interface Props {
   token: string;
@@ -62,12 +65,8 @@ export default function UserProfilePage({ token }: Props) {
   useEffect(() => {
     async function fetchPurchases() {
       try {
-        const res = await axios.get("http://91.142.94.183:8080/purchases", {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { page: 0, size: 20 },
-        });
-
-        const mapped: PurchaseResponse[] = res.data.data.map((p: any) => ({
+        const purchases = await getPurchases(token, { page: 0, size: 20 });
+        const mapped: PurchaseResponse[] = purchases.data.map((p: any) => ({
           id: p.id,
           clientId: p.clientId,
           ticketIds: p.ticketIds,
@@ -86,10 +85,8 @@ export default function UserProfilePage({ token }: Props) {
         await Promise.all(
           uniqueIds.map(async (id) => {
             try {
-              const filmRes = await axios.get(
-                `http://91.142.94.183:8080/films/${id}`
-              );
-              filmData[id] = filmRes.data.title;
+              const filmRes = await getFilm(id);
+              filmData[id] = filmRes.title;
             } catch {
               filmData[id] = "Неизвестный фильм";
             }
@@ -148,11 +145,10 @@ export default function UserProfilePage({ token }: Props) {
       return alert("Заполните рейтинг и текст отзыва");
 
     try {
-      await axios.post(
-        `http://91.142.94.183:8080/films/${filmId}/reviews`,
-        { rating: review.rating, text: review.text },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await createReview(token, filmId, {
+        rating: review.rating,
+        text: review.text,
+      });
       alert("Отзыв отправлен!");
       setReviewForms((prev) => ({
         ...prev,

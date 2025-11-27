@@ -1,7 +1,4 @@
-
-import axios from "axios";
-
-const API_URL = "http://91.142.94.183:8080/auth";
+import { api } from "./http";
 
 export interface AuthResponse {
   accessToken: string;
@@ -15,7 +12,7 @@ export async function registerUser(data: {
   age: number;
   gender: "MALE" | "FEMALE";
 }): Promise<AuthResponse> {
-  const response = await axios.post(`${API_URL}/register`, data, {
+  const response = await api.post("/auth/register", data, {
     headers: { "Content-Type": "application/json" },
   });
   localStorage.setItem("token", response.data.accessToken);
@@ -26,7 +23,7 @@ export async function loginUser(data: {
   email: string;
   password: string;
 }): Promise<AuthResponse> {
-  const response = await axios.post(`${API_URL}/login`, data, {
+  const response = await api.post("/auth/login", data, {
     headers: { "Content-Type": "application/json" },
   });
   localStorage.setItem("token", response.data.accessToken);

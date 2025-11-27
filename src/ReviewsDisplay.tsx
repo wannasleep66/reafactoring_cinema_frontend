@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { getFilmReviews } from "./api/reviews";
 
 interface Review {
   id: string;
@@ -23,13 +23,8 @@ export default function ReviewsDisplay({ movieId }: Props) {
     const fetchReviews = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(
-          `http://91.142.94.183:8080/films/${movieId}/reviews`,
-          {
-            params: { page: 0, size: 20 },
-          }
-        );
-        setReviews(response.data.data || []);
+        const { data } = await getFilmReviews(movieId);
+        setReviews(data);
       } catch (err) {
         console.error(err);
         setError("Ошибка загрузки отзывов");

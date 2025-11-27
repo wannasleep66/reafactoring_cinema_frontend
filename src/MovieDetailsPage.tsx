@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import * as movieApi from "./api/movie";
 import ReviewsDisplay from "./ReviewsDisplay";
+import { getSesssions } from "./api/session";
+import { getHall } from "./api/halls";
+import { getTickets, reserveTicket } from "./api/tickets";
+import { createPurchase } from "./api/purchases";
+import { processPayment } from "./api/payment";
 
 interface Props {
   movie: movieApi.Film;
@@ -69,16 +73,24 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
   const [cvv, setCvv] = useState("");
   const [cardHolderName, setCardHolderName] = useState("");
 
-  const token = localStorage.getItem("token");
-
   useEffect(() => {
+    if (!token) return;
     const fetchSessions = async () => {
       try {
         setLoadingSessions(true);
-        const response = await axios.get("http://91.142.94.183:8080/sessions", {
-          params: { page: 0, size: 100, filmId: movie.id },
+        const { data } = await getSesssions(token, {
+          page: 0,
+          size: 100,
+          filmId: movie.id,
         });
-        setSessions(response.data.data || []);
+        setSessions(
+          data.map((session) => ({
+            id: session.id,
+            hallId: session.hallId,
+            movieId: session.filmId,
+            startAt: session.startAt,
+          }))
+        );
       } catch (err) {
         console.error("Ошибка загрузки сеансов:", err);
       } finally {
@@ -96,20 +108,30 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
     if (!selectedSession) return;
 
     const fetchHallPlanAndTickets = async () => {
+      if (!token) return;
       try {
         setLoadingPlan(true);
         setSelectedSeats([]);
         const [planRes, ticketsRes] = await Promise.all([
-          axios.get(
-            `http://91.142.94.183:8080/halls/${selectedSession.hallId}/plan`
-          ),
-          axios.get(
-            `http://91.142.94.183:8080/sessions/${selectedSession.id}/tickets`
-          ),
+          getHall(selectedSession.hallId),
+          getTickets(selectedSession.id),
         ]);
 
-        setHallPlan(planRes.data);
-        setTickets(ticketsRes.data);
+        setHallPlan({
+          hallId: planRes.id,
+          categories: planRes.plan.categories,
+          seats: planRes.plan.seats,
+          rows: planRes.plan.rows,
+        });
+        setTickets(
+          ticketsRes.map((ticket) => ({
+            id: ticket.id,
+            categoryId: ticket.categoryId,
+            priceCents: ticket.priceCents,
+            seatId: ticket.seatId,
+            status: ticket.status as Ticket["status"],
+          }))
+        );
       } catch (err) {
         console.error("Ошибка загрузки плана или билетов:", err);
       } finally {
@@ -149,12 +171,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
       for (const seatId of selectedSeats) {
         const ticket = tickets.find((t) => t.seatId === seatId);
         if (!ticket) continue;
-
-        await axios.post(
-          `http://91.142.94.183:8080/tickets/${ticket.id}/reserve`,
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await reserveTicket(token, ticket.id);
       }
       alert("Места успешно забронированы!");
 
@@ -162,13 +179,10 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
         .filter((t) => selectedSeats.includes(t.seatId))
         .map((t) => t.id);
 
-      const purchaseRes = await axios.post(
-        "http://91.142.94.183:8080/purchases",
-        { ticketIds: reservedTickets },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setPurchase(purchaseRes.data);
+      const purchases = await createPurchase(token, {
+        ticketIds: reservedTickets,
+      });
+      setPurchase(purchases);
     } catch (err) {
       console.error("Ошибка при бронировании или покупке:", err);
       alert("Ошибка бронирования. Проверьте авторизацию и доступность мест.");
@@ -179,30 +193,30 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
     if (!token || !purchase) return alert("Ошибка оплаты");
 
     try {
-      await axios.post(
-        "http://91.142.94.183:8080/payments/process",
-        {
-          purchaseId: purchase.id,
-          cardNumber,
-          expiryDate,
-          cvv,
-          cardHolderName,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await processPayment(token, {
+        purchaseId: purchase.id,
+        cardNumber,
+        expiryDate,
+        cvv,
+        cardHolderName,
+      });
       alert("Оплата прошла успешно!");
-
       setPurchase(null);
       setSelectedSeats([]);
       setCardNumber("");
       setExpiryDate("");
       setCvv("");
       setCardHolderName("");
-
-      const ticketsRes = await axios.get(
-        `http://91.142.94.183:8080/sessions/${selectedSession?.id}/tickets`
+      const tickets = await getTickets(selectedSession!.id);
+      setTickets(
+        tickets.map((ticket) => ({
+          id: ticket.id,
+          categoryId: ticket.categoryId,
+          priceCents: ticket.priceCents,
+          seatId: ticket.seatId,
+          status: ticket.status as Ticket["status"],
+        }))
       );
-      setTickets(ticketsRes.data);
     } catch (err) {
       console.error("Ошибка оплаты:", err);
       alert("Ошибка оплаты. Проверьте данные карты.");
@@ -229,11 +243,6 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
             <h2 className="text-primary mb-3">{movie.title}</h2>
 
             <p>{movie.description}</p>
-
-            <p>
-              <strong>Жанр:</strong> {movie.genre}
-            </p>
-
             <p>
               <strong>Возраст:</strong> {movie.ageRating}
             </p>
@@ -362,9 +371,11 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                               );
 
                               let color = "btn-outline-light";
-                              if (status === "SOLD") color = "btn-danger";
+                              if (status === "SOLD")
+                                color = "btn-danger";
                               else if (status === "RESERVED")
                                 color = "btn-warning";
+                              else if (isSelected) color = "btn-success";
 
                               return (
                                 <button
@@ -395,10 +406,8 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                         .map((id) => {
                           const ticket = tickets.find((t) => t.seatId === id);
                           if (!ticket || !hallPlan) return "";
-
                           const seat = hallPlan.seats.find((s) => s.id === id);
                           if (!seat) return "";
-
                           const cat = getCategory(ticket.categoryId);
                           return `Ряд ${seat.row + 1}, №${seat.number} (${
                             cat?.name
@@ -407,7 +416,6 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                         .filter(Boolean)
                         .join("; ")}{" "}
                     </p>
-
                     <p>
                       <strong>Итого:</strong> {totalPrice} ₽
                     </p>
@@ -419,6 +427,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                     </button>
                   </div>
                 )}
+
 
                 {purchase && hallPlan && (
                   <div className="text-center mt-4 p-3 border border-light rounded">
@@ -436,11 +445,10 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                             ? `Ряд ${seat.row + 1}, №${seat.number} (${
                                 cat?.name
                               } — ${cat?.priceCents} ₽)`
-                            : "";
+                            : ""; 
                         })
                         .join("; ")}{" "}
                     </p>
-
                     <p>
                       <strong>Сумма:</strong>{" "}
                       {tickets
@@ -451,7 +459,6 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                         }, 0)}{" "}
                       ₽
                     </p>
-
                     <div className="d-flex flex-column align-items-center gap-2">
                       <input
                         placeholder="Номер карты"
@@ -459,7 +466,6 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                         value={cardNumber}
                         onChange={(e) => setCardNumber(e.target.value)}
                       />
-
                       <input
                         placeholder="Срок (MM/YY)"
                         className="form-control"

@@ -1,94 +1,63 @@
 import React, { useEffect, useState } from "react";
+import { getFilms, type Film } from "../api/movie";
+import { getHalls, type Hall } from "../api/halls";
+import {
+  getSesssions,
+  createSession,
+  updateSession,
+  type Session,
+  deleteSession,
+} from "../api/session";
 
-interface Movie {
-  id: string;
-  title: string;
-}
-
-interface Hall {
-  id: string;
-  name: string;
-}
-
-interface Session {
-  id: string;
+type SessionFormSchema = {
+  id?: string;
   filmId: string;
   hallId: string;
   startAt: string;
   periodicConfig?: {
     period: "EVERY_DAY" | "EVERY_WEEK";
     periodGenerationEndsAt: string;
-  } | null;
-}
+  };
+};
 
 interface SessionsManagementProps {
   token: string;
 }
 
 export default function SessionsManagement({ token }: SessionsManagementProps) {
-  const [movies, setMovies] = useState<Movie[]>([]);
+  const [movies, setMovies] = useState<Film[]>([]);
   const [halls, setHalls] = useState<Hall[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [editing, setEditing] = useState<Session | null>(null);
+  const [editing, setEditing] = useState<SessionFormSchema | null>(null);
 
-  useEffect(() => {
+  const fetchSessions = async () => {
     if (!token) return;
-
-    fetch("http://91.142.94.183:8080/films?page=0&size=50", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => setMovies(data.data || []))
-      .catch(console.error);
-
-    fetch("http://91.142.94.183:8080/halls", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => setHalls(data.data || []))
-      .catch(console.error);
-  }, [token]);
-
-
-  const fetchSessions = () => {
-    if (!token) return;
-    fetch("http://91.142.94.183:8080/sessions?page=0&size=50", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => setSessions(data.data || []))
-      .catch(console.error);
+    const { data } = await getSesssions(token, { page: 0, size: 50 });
+    setSessions(data);
   };
 
   useEffect(() => {
+    if (!token) return;
+    const fetchMoviesAndHalls = async () => {
+      const [moviesResponse, hallsResponse] = await Promise.all([
+        getFilms({ page: 0, size: 50 }),
+        getHalls(token),
+      ]);
+      setMovies(moviesResponse.data);
+      setHalls(hallsResponse.data);
+    };
+    fetchMoviesAndHalls();
     fetchSessions();
   }, [token]);
 
-  const handleSave = async (session: Session) => {
+  const handleSave = async (session: SessionFormSchema) => {
     if (!token) return;
-
     try {
-      const method = session.id ? "PUT" : "POST";
-      const url = session.id
-        ? `http://91.142.94.183:8080/sessions/${session.id}`
-        : "http://91.142.94.183:8080/sessions";
-
-      const res = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          filmId: session.filmId,
-          hallId: session.hallId,
-          startAt: session.startAt,
-          periodicConfig: session.periodicConfig || null,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Ошибка при сохранении сеанса");
-
+      if (session.id) {
+        await updateSession(token, session.id, session);
+      } else {
+        await createSession(token, session);
+      }
       await fetchSessions();
       setEditing(null);
     } catch (err) {
@@ -100,11 +69,7 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
   const handleDelete = async (id: string) => {
     if (!token || !window.confirm("Удалить этот сеанс?")) return;
     try {
-      const res = await fetch(`http://91.142.94.183:8080/sessions/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Ошибка при удалении сеанса");
+      await deleteSession(token, id);
       setSessions(sessions.filter((s) => s.id !== id));
     } catch (err) {
       console.error(err);
@@ -124,7 +89,7 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
             filmId: movies[0]?.id || "",
             hallId: halls[0]?.id || "",
             startAt: new Date().toISOString().slice(0, 16),
-            periodicConfig: null,
+            periodicConfig: undefined,
           })
         }
       >
@@ -148,15 +113,14 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
           {sessions.map((s) => (
             <div key={s.id} className="col-md-6 mb-3">
               <div className="card shadow-sm p-3 text-light">
-                <strong>{movies.find((m) => m.id === s.filmId)?.title || s.filmId}</strong>{" "}
-                — <em>{halls.find((h) => h.id === s.hallId)?.name || s.hallId}</em>
+                <strong>
+                  {movies.find((m) => m.id === s.filmId)?.title || s.filmId}
+                </strong>{" "}
+                —{" "}
+                <em>
+                  {halls.find((h) => h.id === s.hallId)?.name || s.hallId}
+                </em>
                 <div>🕒 {new Date(s.startAt).toLocaleString()}</div>
-                {s.periodicConfig && (
-                  <div className="text-info small mt-1">
-                    🔁 {s.periodicConfig.period === "EVERY_DAY" ? "Ежедневно" : "Еженедельно"} до{" "}
-                    {new Date(s.periodicConfig.periodGenerationEndsAt).toLocaleDateString("ru-RU")}
-                  </div>
-                )}
                 <div className="mt-2 d-flex justify-content-between">
                   <button
                     className="btn btn-warning btn-sm"
@@ -181,14 +145,20 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
 }
 
 interface SessionFormProps {
-  session: Session;
-  movies: Movie[];
+  session: SessionFormSchema;
+  movies: Film[];
   halls: Hall[];
-  onSave: (session: Session) => void;
+  onSave: (session: SessionFormSchema) => void;
   onCancel: () => void;
 }
 
-function SessionForm({ session, movies, halls, onSave, onCancel }: SessionFormProps) {
+function SessionForm({
+  session,
+  movies,
+  halls,
+  onSave,
+  onCancel,
+}: SessionFormProps) {
   const [form, setForm] = useState(session);
   const [isPeriodic, setIsPeriodic] = useState(false);
   const [period, setPeriod] = useState<"EVERY_DAY" | "EVERY_WEEK">("EVERY_DAY");
@@ -203,7 +173,9 @@ function SessionForm({ session, movies, halls, onSave, onCancel }: SessionFormPr
     }
   }, [isPeriodic, form.startAt]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
+  ) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
   };
@@ -232,17 +204,33 @@ function SessionForm({ session, movies, halls, onSave, onCancel }: SessionFormPr
 
   return (
     <div className="card p-3 mb-4 shadow-sm">
-      <h5 className="mb-3 text-primary">{session.id ? "Редактирование сеанса" : "Новый сеанс"}</h5>
+      <h5 className="mb-3 text-primary">
+        {session.id ? "Редактирование сеанса" : "Новый сеанс"}
+      </h5>
 
-      <select name="filmId" value={form.filmId} onChange={handleChange} className="form-control mb-2">
+      <select
+        name="filmId"
+        value={form.filmId}
+        onChange={handleChange}
+        className="form-control mb-2"
+      >
         {movies.map((m) => (
-          <option key={m.id} value={m.id}>{m.title}</option>
+          <option key={m.id} value={m.id}>
+            {m.title}
+          </option>
         ))}
       </select>
 
-      <select name="hallId" value={form.hallId} onChange={handleChange} className="form-control mb-2">
+      <select
+        name="hallId"
+        value={form.hallId}
+        onChange={handleChange}
+        className="form-control mb-2"
+      >
         {halls.map((h) => (
-          <option key={h.id} value={h.id}>{h.name}</option>
+          <option key={h.id} value={h.id}>
+            {h.name}
+          </option>
         ))}
       </select>
 
@@ -272,7 +260,9 @@ function SessionForm({ session, movies, halls, onSave, onCancel }: SessionFormPr
         <>
           <select
             value={period}
-            onChange={(e) => setPeriod(e.target.value as "EVERY_DAY" | "EVERY_WEEK")}
+            onChange={(e) =>
+              setPeriod(e.target.value as "EVERY_DAY" | "EVERY_WEEK")
+            }
             className="form-control mb-2"
           >
             <option value="EVERY_DAY">Каждый день</option>
@@ -308,13 +298,15 @@ function SessionForm({ session, movies, halls, onSave, onCancel }: SessionFormPr
                     period,
                     periodGenerationEndsAt: new Date(periodEnd).toISOString(),
                   }
-                : null,
-            } as any)
+                : undefined,
+            })
           }
         >
           💾 Сохранить
         </button>
-        <button className="btn btn-secondary" onClick={onCancel}>✖ Отмена</button>
+        <button className="btn btn-secondary" onClick={onCancel}>
+          ✖ Отмена
+        </button>
       </div>
     </div>
   );

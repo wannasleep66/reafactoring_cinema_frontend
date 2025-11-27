@@ -1,36 +1,100 @@
-import { getCurrentUser } from "./auth";
+import { api, API_URL } from "./http";
+import type { Media } from "./media";
+import type { Pagination, PaginationQuery } from "./pagination";
 
-export interface Film {
+export type FilmAgeRating = "0+" | "6+" | "12+" | "16+" | "18+";
+
+export type FilmResponse = {
   id: string;
   title: string;
   description: string;
   durationMinutes: number;
-  ageRating: string;
+  ageRating: FilmAgeRating;
+  poster?: Media;
   createdAt: string;
   updatedAt: string;
-  imageUrl?: string;
-  genre?: string;
-}
+};
 
-export interface FilmResponse {
-  data: Film[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    pages: number;
+export type Film = {
+  id: string;
+  title: string;
+  description: string;
+  durationMinutes: number;
+  ageRating: FilmAgeRating;
+  imageUrl?: string;
+};
+
+export type FilmCreate = {
+  title: string;
+  description: string;
+  ageRating: FilmAgeRating;
+  posterId?: number;
+};
+
+export type FilmUpdate = {
+  title?: string;
+  description?: string;
+  ageRating?: FilmAgeRating;
+  posterId?: number;
+};
+
+export type FilmListResponse = {
+  data: FilmResponse[];
+  pagination: Pagination;
+};
+
+export async function getFilms(
+  params?: PaginationQuery
+): Promise<{ data: Film[]; pagination: Pagination }> {
+  const { data } = await api.get<FilmListResponse>("/films", {
+    params: params,
+  });
+  return {
+    data: data.data.map((film) => ({
+      id: film.id,
+      ageRating: film.ageRating,
+      description: film.description,
+      durationMinutes: film.durationMinutes,
+      imageUrl: film.poster ? `${API_URL}/media/${film.poster.id}` : undefined,
+      title: film.title,
+    })),
+    pagination: data.pagination,
   };
 }
 
-export async function getFilms(): Promise<Film[]> {
-  const res = await fetch("http://91.142.94.183:8080/films");
-  if (!res.ok) throw new Error("Ошибка загрузки фильмов");
-  const json: FilmResponse = await res.json();
-  return json.data;
+export async function getFilm(id: Film["id"]): Promise<Film> {
+  const { data } = await api.get<FilmResponse>(`/films/${id}`);
+  return {
+    id: data.id,
+    ageRating: data.ageRating,
+    description: data.description,
+    durationMinutes: data.durationMinutes,
+    imageUrl: data.poster ? `${API_URL}/media/${data.poster.id}` : undefined,
+    title: data.title,
+  };
 }
 
-export async function getFilmById(id: string): Promise<Film> {
-  const res = await fetch(`http://91.142.94.183:8080/films/${id}`);
-  if (!res.ok) throw new Error("Фильм не найден");
-  return res.json();
+export async function createFilm(token: string, input: FilmCreate) {
+  const { data } = await api.post<FilmResponse>("/films", input, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+}
+
+export async function updateFilm(
+  token: string,
+  id: Film["id"],
+  input: FilmUpdate
+) {
+  const { data } = await api.put<FilmResponse>(`/films/${id}`, input, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+}
+
+export async function deleteFilm(token: string, id: Film["id"]) {
+  const { data } = await api.delete(`/films/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
 }

@@ -1,31 +1,34 @@
 import React, { useEffect, useState } from "react";
+import {
+  createFilm,
+  deleteFilm,
+  getFilms,
+  updateFilm,
+  type Film,
+  type FilmAgeRating,
+} from "../api/movie";
 
-interface Movie {
-  id: string;
+type MovieFormSchema = {
+  id?: string;
   title: string;
   description: string;
   durationMinutes: number;
-  ageRating: string;
-  poster?: any;
-}
+  ageRating: FilmAgeRating;
+};
 
 interface MoviesManagementProps {
   token: string;
 }
 
 export default function MoviesManagement({ token }: MoviesManagementProps) {
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [editing, setEditing] = useState<Movie | null>(null);
-
+  const [movies, setMovies] = useState<Film[]>([]);
+  const [editing, setEditing] = useState<MovieFormSchema | null>(null);
 
   const fetchMovies = async () => {
     if (!token) return;
     try {
-      const res = await fetch(`http://91.142.94.183:8080/films?page=0&size=20`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      setMovies(data.data);
+      const { data } = await getFilms();
+      setMovies(data);
     } catch (err) {
       console.error("Ошибка загрузки фильмов:", err);
     }
@@ -35,40 +38,14 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
     fetchMovies();
   }, [token]);
 
-
-  const handleSave = async (movie: Movie) => {
+  const handleSave = async (movie: MovieFormSchema) => {
     if (!token) return;
     try {
       if (movie.id) {
-        await fetch(`http://91.142.94.183:8080/films/${movie.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            title: movie.title,
-            description: movie.description,
-            durationMinutes: movie.durationMinutes,
-            ageRating: movie.ageRating,
-          }),
-        });
+        await updateFilm(token, movie.id, movie);
       } else {
-        const res = await fetch(`http://91.142.94.183:8080/films`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            title: movie.title,
-            description: movie.description,
-            durationMinutes: movie.durationMinutes,
-            ageRating: movie.ageRating,
-          }),
-        });
-        const newMovie = await res.json();
-        movie.id = newMovie.id;
+        const data = await createFilm(token, movie);
+        movie.id = data.id;
       }
       await fetchMovies();
       setEditing(null);
@@ -77,14 +54,10 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
     }
   };
 
-
   const handleDelete = async (id: string) => {
     if (!token || !window.confirm("Удалить этот фильм?")) return;
     try {
-      await fetch(`http://91.142.94.183:8080/films/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await deleteFilm(token, id);
       setMovies(movies.filter((m) => m.id !== id));
     } catch (err) {
       console.error("Ошибка удаления фильма:", err);
@@ -103,14 +76,20 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
             title: "",
             description: "",
             durationMinutes: 0,
-            ageRating: "",
+            ageRating: "0+",
           })
         }
       >
         ➕ Добавить фильм
       </button>
 
-      {editing && <MovieForm movie={editing} onSave={handleSave} onCancel={() => setEditing(null)} />}
+      {editing && (
+        <MovieForm
+          movie={editing}
+          onSave={handleSave}
+          onCancel={() => setEditing(null)}
+        />
+      )}
 
       {movies.length === 0 ? (
         <p>Нет фильмов. Добавьте новый.</p>
@@ -122,7 +101,9 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
                 <div className="card-body">
                   <h5 className="card-title">{m.title}</h5>
                   <p className="card-text small ">
-                    {m.description.length > 100 ? m.description.slice(0, 100) + "..." : m.description}
+                    {m.description.length > 100
+                      ? m.description.slice(0, 100) + "..."
+                      : m.description}
                   </p>
                   <p className="mb-1 text-light">
                     ⏱ <strong>{m.durationMinutes}</strong> мин
@@ -131,10 +112,16 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
                     Возрастной рейтинг: <strong>{m.ageRating}</strong>
                   </p>
                   <div className="d-flex justify-content-between">
-                    <button className="btn btn-warning btn-sm" onClick={() => setEditing(m)}>
+                    <button
+                      className="btn btn-warning btn-sm"
+                      onClick={() => setEditing(m)}
+                    >
                       ✏ Редактировать
                     </button>
-                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(m.id)}>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => handleDelete(m.id)}
+                    >
                       🗑 Удалить
                     </button>
                   </div>
@@ -149,29 +136,65 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
 }
 
 interface MovieFormProps {
-  movie: Movie;
-  onSave: (movie: Movie) => void;
+  movie: MovieFormSchema;
+  onSave: (movie: MovieFormSchema) => void;
   onCancel: () => void;
 }
 
 function MovieForm({ movie, onSave, onCancel }: MovieFormProps) {
   const [form, setForm] = useState(movie);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: name === "durationMinutes" ? Number(value) : value });
+    setForm({
+      ...form,
+      [name]: name === "durationMinutes" ? Number(value) : value,
+    });
   };
 
   return (
     <div className="card p-3 mb-4 shadow-sm">
-      <h5 className="mb-3 text-primary">{movie.id ? "Редактирование фильма" : "Добавление фильма"}</h5>
-      <input className="form-control mb-2" name="title" value={form.title} onChange={handleChange} placeholder="Название" />
-      <textarea className="form-control mb-2" name="description" value={form.description} onChange={handleChange} placeholder="Описание" />
-      <input className="form-control mb-2" name="durationMinutes" type="number" value={form.durationMinutes} onChange={handleChange} placeholder="Продолжительность (мин.)" />
-      <input className="form-control mb-3" name="ageRating" value={form.ageRating} onChange={handleChange} placeholder="Возрастной рейтинг (например, 12+)" />
+      <h5 className="mb-3 text-primary">
+        {movie.id ? "Редактирование фильма" : "Добавление фильма"}
+      </h5>
+      <input
+        className="form-control mb-2"
+        name="title"
+        value={form.title}
+        onChange={handleChange}
+        placeholder="Название"
+      />
+      <textarea
+        className="form-control mb-2"
+        name="description"
+        value={form.description}
+        onChange={handleChange}
+        placeholder="Описание"
+      />
+      <input
+        className="form-control mb-2"
+        name="durationMinutes"
+        type="number"
+        value={form.durationMinutes}
+        onChange={handleChange}
+        placeholder="Продолжительность (мин.)"
+      />
+      <input
+        className="form-control mb-3"
+        name="ageRating"
+        value={form.ageRating}
+        onChange={handleChange}
+        placeholder="Возрастной рейтинг (например, 12+)"
+      />
       <div className="d-flex justify-content-end">
-        <button className="btn btn-success me-2" onClick={() => onSave(form)}>💾 Сохранить</button>
-        <button className="btn btn-secondary" onClick={onCancel}>✖ Отмена</button>
+        <button className="btn btn-success me-2" onClick={() => onSave(form)}>
+          💾 Сохранить
+        </button>
+        <button className="btn btn-secondary" onClick={onCancel}>
+          ✖ Отмена
+        </button>
       </div>
     </div>
   );

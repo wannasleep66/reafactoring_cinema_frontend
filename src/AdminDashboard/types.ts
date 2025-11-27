@@ -2,7 +2,7 @@ export interface Movie {
   id: number;
   title: string;
   description: string;
-  duration: number; 
+  duration: number;
   ageRating: string;
 }
 
@@ -11,21 +11,20 @@ export interface Hall {
   name: string;
   number: number;
   rows: number;
-  seatsPerRow: number;
 }
 
 export interface Category {
   id: number;
   name: string;
-  price: number;
+  priceCents: number;
 }
 
 export interface Session {
   id: number;
   movieId: number;
   hallId: number;
-  date: string; 
-  time: string; 
+  date: string;
+  time: string;
   tickets: Ticket[];
 }
 

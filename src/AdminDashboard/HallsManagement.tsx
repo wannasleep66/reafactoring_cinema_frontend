@@ -1,29 +1,15 @@
 import React, { useEffect, useState } from "react";
-
-interface Seat {
-  row: number;
-  number: number;
-  categoryId: string;
-}
-
-interface Row {
-  id: number;
-  rowNumber: number;
-  seatsCount: number;
-  categoryId: string;
-}
-
-interface Hall {
-  id?: string;
-  name: string;
-  number: number;
-  rows: Row[];
-}
-
-interface SeatCategory {
-  id: string;
-  name: string;
-}
+import {
+  createHall,
+  deleteHall,
+  getHall,
+  getHalls,
+  updateHall,
+  type Hall,
+  type Seat,
+  type SeatCreate,
+} from "../api/halls";
+import type { SeatCategory } from "../api/categories";
 
 interface HallsManagementProps {
   token: string;
@@ -32,36 +18,12 @@ interface HallsManagementProps {
 export default function HallsManagement({ token }: HallsManagementProps) {
   const [halls, setHalls] = useState<Hall[]>([]);
   const [editing, setEditing] = useState<Hall | null>(null);
-  const [categories, setCategories] = useState<SeatCategory[]>([]);
 
-  // ✅ Загрузка залов
   const fetchHalls = async () => {
     if (!token) return;
     try {
-      const res = await fetch("http://91.142.94.183:8080/halls", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      const safeHalls = (data.data || []).map((h: any) => ({
-        ...h,
-        rows: h.rows || [],
-      }));
-      setHalls(safeHalls);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // ✅ Загрузка категорий мест
-  const fetchCategories = async () => {
-    if (!token) return;
-    try {
-      const res = await fetch(
-        "http://91.142.94.183:8080/seat-categories?page=0&size=50",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const data = await res.json();
-      setCategories(data.data || []);
+      const { data } = await getHalls(token);
+      setHalls(data);
     } catch (err) {
       console.error(err);
     }
@@ -69,26 +31,19 @@ export default function HallsManagement({ token }: HallsManagementProps) {
 
   useEffect(() => {
     fetchHalls();
-    fetchCategories();
   }, [token]);
 
-  // ✅ Сохранение зала
-  const handleSave = async (hall: Hall) => {
+  const handleSave = async (hall: HallFormSchema) => {
     if (!token) return;
     try {
-      const method = hall.id ? "PUT" : "POST";
-      const url = hall.id
-        ? `http://91.142.94.183:8080/halls/${hall.id}`
-        : "http://91.142.94.183:8080/halls";
-
-      // 🔹 Генерируем плоский массив мест
-      const seats: Seat[] = [];
+      // Генерируем плоский массив мест
+      const seats: SeatCreate[] = [];
       hall.rows.forEach((row, i) => {
-        for (let j = 0; j < row.seatsCount; j++) {
+        for (let j = 0; j < row.seats.length; j++) {
           seats.push({
             row: i + 1,
             number: j + 1,
-            categoryId: row.categoryId,
+            categoryId: Number(row.category.id),
           });
         }
       });
@@ -100,16 +55,12 @@ export default function HallsManagement({ token }: HallsManagementProps) {
         seats,
       };
 
-      const res = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(safeHall),
-      });
+      if (hall.id) {
+        await updateHall(token, hall.id, safeHall);
+      } else {
+        await createHall(token, safeHall);
+      }
 
-      if (!res.ok) throw new Error("Ошибка при сохранении зала");
       await fetchHalls();
       setEditing(null);
     } catch (err) {
@@ -118,15 +69,10 @@ export default function HallsManagement({ token }: HallsManagementProps) {
     }
   };
 
-  // ✅ Удаление зала
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: Hall["id"]) => {
     if (!token || !window.confirm("Удалить этот зал?")) return;
     try {
-      const res = await fetch(`http://91.142.94.183:8080/halls/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Ошибка при удалении зала");
+      await deleteHall(token, id);
       setHalls(halls.filter((h) => h.id !== id));
     } catch (err) {
       console.error(err);
@@ -138,19 +84,14 @@ export default function HallsManagement({ token }: HallsManagementProps) {
     <div className="container-fluid">
       <h2 className="text-primary mb-4">Управление залами</h2>
 
-      <button
-        className="btn btn-success mb-3"
-        onClick={() =>
-          setEditing({ name: "", number: 1, rows: [] })
-        }
-      >
+      <button className="btn btn-success mb-3" onClick={() => setEditing(null)}>
         ➕ Добавить зал
       </button>
 
       {editing && (
         <HallForm
-          hall={editing}
-          categories={categories}
+          token={token}
+          hallId={editing.id!}
           onSave={handleSave}
           onCancel={() => setEditing(null)}
         />
@@ -163,12 +104,18 @@ export default function HallsManagement({ token }: HallsManagementProps) {
           {halls.map((h) => (
             <div key={h.id} className="col-md-6 mb-3">
               <div className="card shadow-sm p-3 text-light">
-                <strong>{h.name}</strong> — №{h.number} | {h.rows.length} рядов
+                <strong>{h.name}</strong> — №{h.number}
                 <div className="mt-2 d-flex justify-content-between">
-                  <button className="btn btn-warning btn-sm" onClick={() => setEditing(h)}>
+                  <button
+                    className="btn btn-warning btn-sm"
+                    onClick={() => setEditing(h)}
+                  >
                     Редактировать
                   </button>
-                  <button className="btn btn-danger btn-sm" onClick={() => handleDelete(h.id!)}>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => handleDelete(h.id!)}
+                  >
                     Удалить
                   </button>
                 </div>
@@ -180,21 +127,64 @@ export default function HallsManagement({ token }: HallsManagementProps) {
     </div>
   );
 }
+interface Row {
+  number: number;
+  seats: Seat[];
+  category: SeatCategory;
+}
 
+interface HallFormSchema {
+  id?: string;
+  name: string;
+  number: number;
+  rows: Row[];
+}
 
 interface HallFormProps {
-  hall: Hall;
-  categories: SeatCategory[];
-  onSave: (hall: Hall) => void;
+  token: string;
+  hallId: Hall["id"];
+  onSave: (hall: HallFormSchema) => void;
   onCancel: () => void;
 }
 
-function HallForm({ hall, categories, onSave, onCancel }: HallFormProps) {
-  const [form, setForm] = useState<Hall>({ ...hall, rows: hall.rows || [] });
+function HallForm({ token, hallId, onSave, onCancel }: HallFormProps) {
+  const [categories, setCategories] = useState<SeatCategory[]>([]);
+  const [form, setForm] = useState<HallFormSchema>({
+    id: "",
+    name: "",
+    number: 0,
+    rows: [],
+  });
+
+  useEffect(() => {
+    const fetchHall = async () => {
+      const hall = await getHall(hallId);
+      const rows = hall.plan.seats.reduce((acc: Row[], seat: Seat) => {
+        return acc.map((row) => {
+          if (row.number === seat.row) {
+            row.seats = [...row.seats, seat];
+          }
+          return row;
+        });
+      }, [] as Row[]);
+
+      setCategories(hall.plan.categories);
+      setForm({
+        id: hall.id,
+        name: hall.name,
+        number: hall.number,
+        rows: rows,
+      });
+    };
+
+    fetchHall();
+  }, [token, hallId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: name === "number" ? Number(value) : value });
+    if (value) {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const addRow = () => {
@@ -202,50 +192,70 @@ function HallForm({ hall, categories, onSave, onCancel }: HallFormProps) {
       ...form,
       rows: [
         ...form.rows,
-        { id: Date.now(), rowNumber: form.rows.length + 1, seatsCount: 1, categoryId: categories[0]?.id || "" },
+        {
+          number: form.rows.length + 1,
+          category: categories[0] || { id: "", name: "" },
+          seats: [],
+        },
       ],
     });
   };
 
   const removeRow = (id: number) => {
-    setForm({ ...form, rows: form.rows.filter((r) => r.id !== id) });
+    setForm({ ...form, rows: form.rows.filter((r) => r.number !== id) });
   };
 
-  const handleRowChange = (id: number, seatsCount: number, categoryId: string) => {
+  const handleRowChange = (
+    id: number,
+    seatsCount: number,
+    categoryId: string
+  ) => {
     setForm({
       ...form,
       rows: form.rows.map((r) =>
-        r.id === id ? { ...r, seatsCount, categoryId } : r
+        r.number === id ? { ...r, seatsCount, categoryId } : r
       ),
     });
   };
 
   return (
     <div className="card p-3 mb-4 shadow-sm">
-      <h5 className="mb-3 text-primary">{hall.id ? "Редактирование зала" : "Новый зал"}</h5>
+      <h5 className="mb-3 text-primary">
+        {form.id ? "Редактирование зала" : "Новый зал"}
+      </h5>
 
-      <input className="form-control mb-2 " name="name" value={form.name} onChange={handleChange} placeholder="Название зала" />
-      <input className="form-control mb-2" name="number" type="number" value={form.number} onChange={handleChange} placeholder="Номер зала" />
+      <input
+        className="form-control mb-2 "
+        name="name"
+        value={form?.name}
+        onChange={handleChange}
+        placeholder="Название зала"
+      />
+      <input
+        className="form-control mb-2"
+        name="number"
+        type="number"
+        value={form?.number}
+        onChange={handleChange}
+        placeholder="Номер зала"
+      />
 
       <h6 className="text-light">Ряды и количество мест:</h6>
       {form.rows.map((row) => (
-        <div key={row.id} className="d-flex align-items-center mb-2">
-          <span className="me-2 text-light ">Ряд {row.rowNumber}:</span>
+        <div key={row.number} className="d-flex align-items-center mb-2">
+          <span className="me-2 text-light ">Ряд {row.number}:</span>
           <input
             type="number"
             className="form-control me-2"
             style={{ width: "100px" }}
-            value={row.seatsCount}
-            onChange={(e) =>
-              handleRowChange(row.id, Number(e.target.value), row.categoryId)
-            }
+            value={row.seats.length}
           />
           <select
             className="form-control me-2"
             style={{ width: "200px" }}
-            value={row.categoryId}
+            value={row.category.id}
             onChange={(e) =>
-              handleRowChange(row.id, row.seatsCount, e.target.value)
+              handleRowChange(row.number, row.seats.length, e.target.value)
             }
           >
             {categories.map((c) => (
@@ -254,15 +264,26 @@ function HallForm({ hall, categories, onSave, onCancel }: HallFormProps) {
               </option>
             ))}
           </select>
-          <button className="btn btn-sm btn-danger" onClick={() => removeRow(row.id)}>✖</button>
+          <button
+            className="btn btn-sm btn-danger"
+            onClick={() => removeRow(row.number)}
+          >
+            ✖
+          </button>
         </div>
       ))}
 
-      <button className="btn btn-outline-primary mb-3" onClick={addRow}>➕ Добавить ряд</button>
+      <button className="btn btn-outline-primary mb-3" onClick={addRow}>
+        ➕ Добавить ряд
+      </button>
 
       <div className="d-flex justify-content-end">
-        <button className="btn btn-success me-2" onClick={() => onSave(form)}>💾 Сохранить</button>
-        <button className="btn btn-secondary" onClick={onCancel}>✖ Отмена</button>
+        <button className="btn btn-success me-2" onClick={() => onSave(form)}>
+          💾 Сохранить
+        </button>
+        <button className="btn btn-secondary" onClick={onCancel}>
+          ✖ Отмена
+        </button>
       </div>
     </div>
   );
