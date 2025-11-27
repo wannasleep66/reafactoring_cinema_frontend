@@ -9,7 +9,7 @@ interface Props {
   onDateChange: (d: string) => void;
   genres: string[];
   ageRatings: string[];
-  dates: string[]; 
+  dates: string[];
 }
 
 const MovieFilter: React.FC<Props> = ({

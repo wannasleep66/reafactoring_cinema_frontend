@@ -25,7 +25,7 @@ export async function updateCurrentUser(
   token: string,
   input: Partial<
     Pick<User, "firstName" | "lastName" | "email" | "age" | "gender">
-  >
+  >,
 ): Promise<User> {
   const { data } = await api.put<User>("/users/me", input, {
     headers: {

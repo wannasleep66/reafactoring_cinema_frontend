@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from "react";
-import { getFilms, type Film } from "./api/movie";
+import { useState, useEffect } from "react";
+
 import MovieCard from "./MovieCard";
 import MovieDetailsPage from "./MovieDetailsPage";
+import { getFilms, type Film } from "./api/movie";
 
 let globalLoadingState = false;
 
 export default function HomePage() {
-  const [films, setFilms] = useState<movieApi.Film[]>([]);
-  const [selectedFilm, setSelectedFilm] = useState<movieApi.Film | null>(null);
+  const [films, setFilms] = useState<Film[]>([]);
+  const [selectedFilm, setSelectedFilm] = useState<Film | null>(null);
   const [viewCount, setViewCount] = useState(0);
 
   useEffect(() => {
     globalLoadingState = true;
 
-    movieApi
-      .getFilms()
+    getFilms()
       .then((filmsData) => {
-        setFilms(filmsData);
+        setFilms(filmsData.data);
         globalLoadingState = false;
 
         setViewCount((prev) => prev + 1);
@@ -27,7 +27,7 @@ export default function HomePage() {
       });
   }, []);
 
-  const handleFilmSelect = (film: movieApi.Film) => {
+  const handleFilmSelect = (film: Film) => {
     setSelectedFilm(film);
     setViewCount((prev) => prev + 1);
   };

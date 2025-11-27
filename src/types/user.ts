@@ -20,7 +20,7 @@ export interface User {
   id: number;
   username: string;
   email: string;
-   password?: string;
+  password?: string;
   role?: "admin" | "client";
 }
 
@@ -40,7 +40,7 @@ export interface Purchase {
 
 export interface Review {
   movieId: number;
-  rating: number; 
+  rating: number;
   text: string;
 }
 

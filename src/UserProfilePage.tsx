@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import * as userApi from "./api/user";
 import { getPurchases } from "./api/purchases";
 import { getFilm } from "./api/movie";
@@ -39,7 +38,7 @@ export default function UserProfilePage({ token }: Props) {
   const [purchases, setPurchases] = useState<PurchaseResponse[]>([]);
   const [filmTitles, setFilmTitles] = useState<Record<string, string>>({});
   const [reviewForms, setReviewForms] = useState<Record<string, ReviewForm>>(
-    {}
+    {},
   );
 
   useEffect(() => {
@@ -66,6 +65,7 @@ export default function UserProfilePage({ token }: Props) {
     async function fetchPurchases() {
       try {
         const purchases = await getPurchases(token, { page: 0, size: 20 });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mapped: PurchaseResponse[] = purchases.data.map((p: any) => ({
           id: p.id,
           clientId: p.clientId,
@@ -90,7 +90,7 @@ export default function UserProfilePage({ token }: Props) {
             } catch {
               filmData[id] = "Неизвестный фильм";
             }
-          })
+          }),
         );
 
         setFilmTitles(filmData);
@@ -103,7 +103,7 @@ export default function UserProfilePage({ token }: Props) {
   }, [token]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: name === "age" ? Number(value) : value });
@@ -131,7 +131,7 @@ export default function UserProfilePage({ token }: Props) {
   const handleReviewChange = (
     filmId: string,
     field: "rating" | "text",
-    value: string | number
+    value: string | number,
   ) => {
     setReviewForms((prev) => ({
       ...prev,
@@ -269,7 +269,7 @@ export default function UserProfilePage({ token }: Props) {
                       handleReviewChange(
                         p.filmId,
                         "rating",
-                        Number(e.target.value)
+                        Number(e.target.value),
                       )
                     }
                   />

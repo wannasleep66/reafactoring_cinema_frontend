@@ -57,7 +57,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
@@ -89,7 +89,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
             hallId: session.hallId,
             movieId: session.filmId,
             startAt: session.startAt,
-          }))
+          })),
         );
       } catch (err) {
         console.error("Ошибка загрузки сеансов:", err);
@@ -101,7 +101,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
   }, [movie.id]);
 
   const filteredSessions = sessions.filter(
-    (s) => s.startAt.slice(0, 10) === selectedDate
+    (s) => s.startAt.slice(0, 10) === selectedDate,
   );
 
   useEffect(() => {
@@ -130,7 +130,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
             priceCents: ticket.priceCents,
             seatId: ticket.seatId,
             status: ticket.status as Ticket["status"],
-          }))
+          })),
         );
       } catch (err) {
         console.error("Ошибка загрузки плана или билетов:", err);
@@ -146,7 +146,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
     setSelectedSeats((prev) =>
       prev.includes(seatId)
         ? prev.filter((id) => id !== seatId)
-        : [...prev, seatId]
+        : [...prev, seatId],
     );
   };
 
@@ -215,7 +215,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
           priceCents: ticket.priceCents,
           seatId: ticket.seatId,
           status: ticket.status as Ticket["status"],
-        }))
+        })),
       );
     } catch (err) {
       console.error("Ошибка оплаты:", err);
@@ -272,7 +272,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                 filteredSessions.map((session) => {
                   const time = new Date(session.startAt).toLocaleTimeString(
                     [],
-                    { hour: "2-digit", minute: "2-digit" }
+                    { hour: "2-digit", minute: "2-digit" },
                   );
                   return (
                     <button
@@ -367,12 +367,11 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                               const status = getSeatStatus(seat.id);
                               const category = getCategory(seat.categoryId);
                               const isSelected = selectedSeats.includes(
-                                seat.id
+                                seat.id,
                               );
 
                               let color = "btn-outline-light";
-                              if (status === "SOLD")
-                                color = "btn-danger";
+                              if (status === "SOLD") color = "btn-danger";
                               else if (status === "RESERVED")
                                 color = "btn-warning";
                               else if (isSelected) color = "btn-success";
@@ -428,7 +427,6 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                   </div>
                 )}
 
-
                 {purchase && hallPlan && (
                   <div className="text-center mt-4 p-3 border border-light rounded">
                     <h5>Оплата</h5>
@@ -439,13 +437,13 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                         .map((t) => {
                           const cat = getCategory(t.categoryId);
                           const seat = hallPlan.seats.find(
-                            (s) => s.id === t.seatId
+                            (s) => s.id === t.seatId,
                           );
                           return seat
                             ? `Ряд ${seat.row + 1}, №${seat.number} (${
                                 cat?.name
                               } — ${cat?.priceCents} ₽)`
-                            : ""; 
+                            : "";
                         })
                         .join("; ")}{" "}
                     </p>

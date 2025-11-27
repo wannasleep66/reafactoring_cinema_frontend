@@ -208,12 +208,12 @@ function HallForm({ token, hallId, onSave, onCancel }: HallFormProps) {
   const handleRowChange = (
     id: number,
     seatsCount: number,
-    categoryId: string
+    categoryId: string,
   ) => {
     setForm({
       ...form,
       rows: form.rows.map((r) =>
-        r.number === id ? { ...r, seatsCount, categoryId } : r
+        r.number === id ? { ...r, seatsCount, categoryId } : r,
       ),
     });
   };

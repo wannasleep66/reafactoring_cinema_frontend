@@ -9,7 +9,9 @@ interface AdminPanelProps {
 }
 
 export default function AdminDashboard({ onBack }: AdminPanelProps) {
-  const [section, setSection] = useState<"movies" | "halls" | "categories" | "sessions">("movies");
+  const [section, setSection] = useState<
+    "movies" | "halls" | "categories" | "sessions"
+  >("movies");
   const [token, setToken] = useState<string>("");
 
   useEffect(() => {
@@ -20,7 +22,9 @@ export default function AdminDashboard({ onBack }: AdminPanelProps) {
   if (!token) {
     return (
       <div className="container p-4">
-        <p className="text-danger">Требуется авторизация. Пожалуйста, войдите.</p>
+        <p className="text-danger">
+          Требуется авторизация. Пожалуйста, войдите.
+        </p>
         <button className="btn btn-primary" onClick={onBack}>
           ⬅ Назад
         </button>
@@ -69,14 +73,13 @@ export default function AdminDashboard({ onBack }: AdminPanelProps) {
             </button>
           </li>
         </ul>
-    
       </div>
 
       <div className="flex-grow-1 bg-light text-dark p-4 overflow-auto">
         {section === "movies" && <MoviesManagement token={token} />}
         {section === "halls" && <HallsManagement token={token} />}
         {section === "categories" && <CategoriesManagement token={token} />}
-                {section === "sessions" && <SessionsManagement token={token} />}
+        {section === "sessions" && <SessionsManagement token={token} />}
       </div>
     </div>
   );

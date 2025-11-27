@@ -28,7 +28,7 @@ export async function getPaymentStatus(token: string, paymentId: string) {
     `/payments/${paymentId}`,
     {
       headers: { Authorization: `Bearer ${token}` },
-    }
+    },
   );
   return data;
 }

@@ -52,7 +52,7 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
     setSelectedSeats((prev) =>
       prev.includes(seatId)
         ? prev.filter((id) => id !== seatId)
-        : [...prev, seatId]
+        : [...prev, seatId],
     );
   };
 
@@ -73,7 +73,7 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
   }
 
   const rows = Array.from(new Set(plan.seats.map((s) => s.row))).sort(
-    (a, b) => a - b
+    (a, b) => a - b,
   );
   const getCategory = (catId: string) =>
     plan.categories.find((c) => c.id === catId);
@@ -122,10 +122,10 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
                   const color = isTaken
                     ? "btn-secondary"
                     : isSelected
-                    ? "btn-success"
-                    : category?.name?.toLowerCase().includes("vip")
-                    ? "btn-primary"
-                    : "btn-outline-light";
+                      ? "btn-success"
+                      : category?.name?.toLowerCase().includes("vip")
+                        ? "btn-primary"
+                        : "btn-outline-light";
 
                   return (
                     <button

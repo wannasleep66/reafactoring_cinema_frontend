@@ -39,7 +39,7 @@ export async function createCategory(token: string, input: SeatCategoryCreate) {
 export async function updateCategory(
   token: string,
   id: SeatCategory["id"],
-  input: SeatCategoryUpdate
+  input: SeatCategoryUpdate,
 ) {
   await api.put(`/seat-categories/${id}`, input, {
     headers: { Authorization: `Bearer ${token}` },

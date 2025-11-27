@@ -145,7 +145,7 @@ function MovieForm({ movie, onSave, onCancel }: MovieFormProps) {
   const [form, setForm] = useState(movie);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setForm({

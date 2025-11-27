@@ -9,7 +9,6 @@ export interface Movie {
   rating?: number;
 }
 
-
 export interface Session {
   id: number;
   movieId: number;
@@ -26,4 +25,3 @@ export interface Seat {
   price: number;
   isTaken: boolean;
 }
-  

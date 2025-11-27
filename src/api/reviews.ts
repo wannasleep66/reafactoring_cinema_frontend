@@ -28,7 +28,7 @@ export type ReviewListResponse = {
 
 export async function getFilmReviews(filmId: Film["id"]) {
   const { data } = await api.get<ReviewListResponse>(
-    `/films/${filmId}/reviews`
+    `/films/${filmId}/reviews`,
   );
   return data;
 }
@@ -41,7 +41,7 @@ export async function getReview(id: Review["id"]) {
 export async function createReview(
   token: string,
   filmdId: Film["id"],
-  input: ReviewCreate
+  input: ReviewCreate,
 ) {
   const { data } = await api.post<Review>(`/films/${filmdId}/reviews`, input, {
     headers: {
@@ -54,7 +54,7 @@ export async function createReview(
 export async function updateReview(
   token: string,
   id: Review["id"],
-  input: ReviewUpdate
+  input: ReviewUpdate,
 ) {
   const { data } = await api.put<Review>(`/reviews/${id}`, input, {
     headers: {

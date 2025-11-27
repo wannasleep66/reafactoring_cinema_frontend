@@ -40,7 +40,7 @@ export type GetSessionsQueryParams = PaginationQuery & {
 
 export async function getSesssions(
   token: string,
-  params?: GetSessionsQueryParams
+  params?: GetSessionsQueryParams,
 ) {
   const { data } = await api.get<SessionListResponse>("/sessions", {
     params: params,
@@ -65,7 +65,7 @@ export async function createSession(token: string, input: SessionCreate) {
 export async function updateSession(
   token: string,
   id: Session["id"],
-  input: SessionUpdate
+  input: SessionUpdate,
 ) {
   const { data } = await api.put<Session>(`/sessions/${id}`, input, {
     headers: { Authorization: `Bearer ${token}` },

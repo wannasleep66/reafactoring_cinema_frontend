@@ -19,7 +19,7 @@ export type GetTicketQuery = {
 
 export async function getTickets(
   sessionId: Session["id"],
-  params?: GetTicketQuery
+  params?: GetTicketQuery,
 ) {
   const { data } = await api.get<Ticket[]>(`/sessions/${sessionId}/tickets`, {
     params,

@@ -174,7 +174,7 @@ function SessionForm({
   }, [isPeriodic, form.startAt]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
+    e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>,
   ) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });

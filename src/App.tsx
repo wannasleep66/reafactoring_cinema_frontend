@@ -12,13 +12,12 @@ import HomePage from "./HomePage";
 import LoginPage from "./LoginPage";
 import RegisterPage from "./RegisterPage";
 import UserProfilePage from "./UserProfilePage";
-import MovieDetailsPage from "./MovieDetailsPage";
 import AdminDashboard from "./AdminDashboard/AdminDashboard";
 import { getCurrentUser, logout } from "./api/auth";
 import * as movie from "./api/movie";
 import { jwtDecode } from "jwt-decode";
 
-let globalAppVersion = "1.0.0";
+const globalAppVersion = "1.0.0";
 
 interface TokenPayload {
   sub: string;
@@ -134,7 +133,7 @@ function MovieDetailsWrapper() {
 
   useEffect(() => {
     if (!id) return;
-    movie.getFilmById(id).then(setFilm);
+    movie.getFilm(id).then(setFilm);
   }, [id]);
 
   if (!film) return <div className="text-center mt-5">Загрузка фильма...</div>;

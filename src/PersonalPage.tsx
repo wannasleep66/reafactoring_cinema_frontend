@@ -12,12 +12,20 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ onBack }) => {
       <div className="bg-secondary p-4 rounded w-50">
         <div className="mb-3">
           <label className="form-label">Имя:</label>
-          <input type="text" className="form-control" placeholder="Введите имя" />
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Введите имя"
+          />
         </div>
 
         <div className="mb-3">
           <label className="form-label">Фамилия:</label>
-          <input type="text" className="form-control" placeholder="Введите фамилию" />
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Введите фамилию"
+          />
         </div>
 
         <button className="btn btn-primary mt-3" onClick={onBack}>

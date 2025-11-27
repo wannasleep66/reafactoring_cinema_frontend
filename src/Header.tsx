@@ -19,10 +19,7 @@ export default function Header({ token, onLogout }: HeaderProps) {
             <Link to="/profile" className="text-light me-3">
               Профиль
             </Link>
-            <button
-              onClick={onLogout}
-              className="btn btn-outline-light btn-sm"
-            >
+            <button onClick={onLogout} className="btn btn-outline-light btn-sm">
               Выйти
             </button>
           </>

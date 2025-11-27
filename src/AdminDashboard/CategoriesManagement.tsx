@@ -17,7 +17,6 @@ export default function CategoriesManagement({
   const [categories, setCategories] = useState<SeatCategory[]>([]);
   const [editing, setEditing] = useState<CategoryFormSchema | null>(null);
 
-  // Загрузка категорий
   const fetchCategories = async () => {
     if (!token) return;
     try {
@@ -32,7 +31,6 @@ export default function CategoriesManagement({
     fetchCategories();
   }, [token]);
 
-  // Создание / редактирование категории
   const handleSave = async (cat: CategoryFormSchema) => {
     if (!token) return;
     if (!cat.name?.trim()) return alert("Введите название категории");

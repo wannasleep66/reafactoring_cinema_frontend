@@ -44,7 +44,7 @@ export type FilmListResponse = {
 };
 
 export async function getFilms(
-  params?: PaginationQuery
+  params?: PaginationQuery,
 ): Promise<{ data: Film[]; pagination: Pagination }> {
   const { data } = await api.get<FilmListResponse>("/films", {
     params: params,
@@ -84,7 +84,7 @@ export async function createFilm(token: string, input: FilmCreate) {
 export async function updateFilm(
   token: string,
   id: Film["id"],
-  input: FilmUpdate
+  input: FilmUpdate,
 ) {
   const { data } = await api.put<FilmResponse>(`/films/${id}`, input, {
     headers: { Authorization: `Bearer ${token}` },

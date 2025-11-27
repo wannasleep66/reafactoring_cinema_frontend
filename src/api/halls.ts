@@ -78,7 +78,7 @@ export async function createHall(token: string, input: HallCreate) {
 export async function updateHall(
   token: string,
   id: Hall["id"],
-  input: HallUpdate
+  input: HallUpdate,
 ) {
   await api.put(`/halls/${id}`, input, {
     headers: { Authorization: `Bearer ${token}` },
