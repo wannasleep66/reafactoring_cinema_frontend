@@ -5,7 +5,6 @@ import {
   Route,
   Navigate,
   useParams,
-  useNavigate,
 } from "react-router-dom";
 import Header from "./Header";
 import HomePage from "./HomePage";
@@ -16,8 +15,6 @@ import AdminDashboard from "./AdminDashboard/AdminDashboard";
 import { getCurrentUser, logout } from "./api/auth";
 import * as movie from "./api/movie";
 import { jwtDecode } from "jwt-decode";
-
-const globalAppVersion = "1.0.0";
 
 interface TokenPayload {
   sub: string;
@@ -128,7 +125,6 @@ export default function App() {
 
 function MovieDetailsWrapper() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const [film, setFilm] = useState<movie.Film | null>(null);
 
   useEffect(() => {
@@ -137,14 +133,4 @@ function MovieDetailsWrapper() {
   }, [id]);
 
   if (!film) return <div className="text-center mt-5">Загрузка фильма...</div>;
-
-  const handleSelectSession = (sessionId: number) => {
-    navigate(`/sessions/${sessionId}`, {
-      state: {
-        from: "movie-details",
-        timestamp: new Date().toISOString(),
-        futureFeature: "reserved_for_future_use",
-      },
-    });
-  };
 }
