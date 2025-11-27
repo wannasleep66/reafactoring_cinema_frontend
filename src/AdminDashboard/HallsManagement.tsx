@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   createHall,
   deleteHall,
@@ -10,33 +10,22 @@ import {
   type SeatCreate,
 } from "../api/halls";
 import type { SeatCategory } from "../api/categories";
+import { useQuery } from "../hooks/query";
 
 interface HallsManagementProps {
   token: string;
 }
 
 export default function HallsManagement({ token }: HallsManagementProps) {
-  const [halls, setHalls] = useState<Hall[]>([]);
+  const { data: halls, refetch: refetchHalls } = useQuery({
+    queryFn: () => getHalls(token).then((res) => res.data),
+  });
+
   const [editing, setEditing] = useState<Hall | null>(null);
-
-  const fetchHalls = async () => {
-    if (!token) return;
-    try {
-      const { data } = await getHalls(token);
-      setHalls(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  useEffect(() => {
-    fetchHalls();
-  }, [token]);
 
   const handleSave = async (hall: HallFormSchema) => {
     if (!token) return;
     try {
-      // Генерируем плоский массив мест
       const seats: SeatCreate[] = [];
       hall.rows.forEach((row, i) => {
         for (let j = 0; j < row.seats.length; j++) {
@@ -61,7 +50,7 @@ export default function HallsManagement({ token }: HallsManagementProps) {
         await createHall(token, safeHall);
       }
 
-      await fetchHalls();
+      refetchHalls();
       setEditing(null);
     } catch (err) {
       console.error(err);
@@ -73,7 +62,7 @@ export default function HallsManagement({ token }: HallsManagementProps) {
     if (!token || !window.confirm("Удалить этот зал?")) return;
     try {
       await deleteHall(token, id);
-      setHalls(halls.filter((h) => h.id !== id));
+      refetchHalls();
     } catch (err) {
       console.error(err);
       alert("Не удалось удалить зал");
@@ -97,11 +86,11 @@ export default function HallsManagement({ token }: HallsManagementProps) {
         />
       )}
 
-      {halls.length === 0 ? (
+      {halls?.length === 0 ? (
         <p>Залов пока нет.</p>
       ) : (
         <div className="row">
-          {halls.map((h) => (
+          {halls?.map((h) => (
             <div key={h.id} className="col-md-6 mb-3">
               <div className="card shadow-sm p-3 text-light">
                 <strong>{h.name}</strong> — №{h.number}
@@ -147,38 +136,25 @@ interface HallFormProps {
   onCancel: () => void;
 }
 
-function HallForm({ token, hallId, onSave, onCancel }: HallFormProps) {
-  const [categories, setCategories] = useState<SeatCategory[]>([]);
-  const [form, setForm] = useState<HallFormSchema>({
-    id: "",
-    name: "",
-    number: 0,
-    rows: [],
+function HallForm({ hallId, onSave, onCancel }: HallFormProps) {
+  const { data: hall } = useQuery({
+    queryFn: () => getHall(hallId).then((res) => res),
   });
 
-  useEffect(() => {
-    const fetchHall = async () => {
-      const hall = await getHall(hallId);
-      const rows = hall.plan.seats.reduce((acc: Row[], seat: Seat) => {
+  const [form, setForm] = useState<HallFormSchema>({
+    id: hall?.id ?? "",
+    name: hall?.name ?? "",
+    number: hall?.number ?? 0,
+    rows:
+      hall?.plan.seats.reduce((acc: Row[], seat: Seat) => {
         return acc.map((row) => {
           if (row.number === seat.row) {
             row.seats = [...row.seats, seat];
           }
           return row;
         });
-      }, [] as Row[]);
-
-      setCategories(hall.plan.categories);
-      setForm({
-        id: hall.id,
-        name: hall.name,
-        number: hall.number,
-        rows: rows,
-      });
-    };
-
-    fetchHall();
-  }, [token, hallId]);
+      }, [] as Row[]) ?? [],
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -194,7 +170,7 @@ function HallForm({ token, hallId, onSave, onCancel }: HallFormProps) {
         ...form.rows,
         {
           number: form.rows.length + 1,
-          category: categories[0] || { id: "", name: "" },
+          category: hall!.plan.categories[0] || { id: "", name: "" },
           seats: [],
         },
       ],
@@ -258,7 +234,7 @@ function HallForm({ token, hallId, onSave, onCancel }: HallFormProps) {
               handleRowChange(row.number, row.seats.length, e.target.value)
             }
           >
-            {categories.map((c) => (
+            {hall?.plan.categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>

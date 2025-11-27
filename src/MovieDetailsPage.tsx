@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import * as movieApi from "./api/movie";
 import ReviewsDisplay from "./ReviewsDisplay";
 import { getSesssions } from "./api/session";
@@ -6,6 +6,7 @@ import { getHall } from "./api/halls";
 import { getTickets, reserveTicket } from "./api/tickets";
 import { createPurchase } from "./api/purchases";
 import { processPayment } from "./api/payment";
+import { useQuery } from "./hooks/query";
 
 interface Props {
   movie: movieApi.Film;
@@ -54,17 +55,40 @@ interface Purchase {
 }
 
 const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [loadingSessions, setLoadingSessions] = useState(true);
+  const token = localStorage.getItem("token");
+
+  const { data: sessions, loading: loadingSessions } = useQuery({
+    queryFn: () => {
+      if (!token) return;
+      return getSesssions(token!, {
+        page: 0,
+        size: 100,
+        filmId: movie.id,
+      }).then((res) => res.data);
+    },
+  });
+  const {
+    data: hall,
+    loading: loadingHall,
+    refetch: refetchHall,
+  } = useQuery({
+    queryFn: () => {
+      if (!selectedSession) return;
+      return getHall(selectedSession.hallId);
+    },
+  });
+  const { data: tickets, refetch: refetchTickets } = useQuery({
+    queryFn: () => {
+      if (!selectedSession) return;
+      return getTickets(selectedSession.id);
+    },
+  });
+
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0],
   );
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
-
-  const [hallPlan, setHallPlan] = useState<HallPlan | null>(null);
-  const [loadingPlan, setLoadingPlan] = useState(false);
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
-  const [tickets, setTickets] = useState<Ticket[]>([]);
 
   const [purchase, setPurchase] = useState<Purchase | null>(null);
 
@@ -73,74 +97,8 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
   const [cvv, setCvv] = useState("");
   const [cardHolderName, setCardHolderName] = useState("");
 
-  useEffect(() => {
-    if (!token) return;
-    const fetchSessions = async () => {
-      try {
-        setLoadingSessions(true);
-        const { data } = await getSesssions(token, {
-          page: 0,
-          size: 100,
-          filmId: movie.id,
-        });
-        setSessions(
-          data.map((session) => ({
-            id: session.id,
-            hallId: session.hallId,
-            movieId: session.filmId,
-            startAt: session.startAt,
-          })),
-        );
-      } catch (err) {
-        console.error("Ошибка загрузки сеансов:", err);
-      } finally {
-        setLoadingSessions(false);
-      }
-    };
-    fetchSessions();
-  }, [movie.id]);
-
-  const filteredSessions = sessions.filter(
-    (s) => s.startAt.slice(0, 10) === selectedDate,
-  );
-
-  useEffect(() => {
-    if (!selectedSession) return;
-
-    const fetchHallPlanAndTickets = async () => {
-      if (!token) return;
-      try {
-        setLoadingPlan(true);
-        setSelectedSeats([]);
-        const [planRes, ticketsRes] = await Promise.all([
-          getHall(selectedSession.hallId),
-          getTickets(selectedSession.id),
-        ]);
-
-        setHallPlan({
-          hallId: planRes.id,
-          categories: planRes.plan.categories,
-          seats: planRes.plan.seats,
-          rows: planRes.plan.rows,
-        });
-        setTickets(
-          ticketsRes.map((ticket) => ({
-            id: ticket.id,
-            categoryId: ticket.categoryId,
-            priceCents: ticket.priceCents,
-            seatId: ticket.seatId,
-            status: ticket.status as Ticket["status"],
-          })),
-        );
-      } catch (err) {
-        console.error("Ошибка загрузки плана или билетов:", err);
-      } finally {
-        setLoadingPlan(false);
-      }
-    };
-
-    fetchHallPlanAndTickets();
-  }, [selectedSession]);
+  const filteredSessions =
+    sessions?.filter((s) => s.startAt.slice(0, 10) === selectedDate) || [];
 
   const handleSeatClick = (seatId: string) => {
     setSelectedSeats((prev) =>
@@ -151,14 +109,17 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
   };
 
   const getCategory = (catId: string) =>
-    hallPlan?.categories.find((c) => c.id === catId);
+    hall?.plan.categories.find((c) => c.id === catId);
 
   const getSeatStatus = (seatId: string): Ticket["status"] => {
-    return tickets.find((t) => t.seatId === seatId)?.status || "AVAILABLE";
+    return (
+      (tickets?.find((t) => t.seatId === seatId)?.status as Ticket["status"]) ||
+      "AVAILABLE"
+    );
   };
 
   const totalPrice = selectedSeats.reduce((sum, id) => {
-    const seat = hallPlan?.seats.find((s) => s.id === id);
+    const seat = hall?.plan.seats.find((s) => s.id === id);
     if (!seat) return sum;
     const cat = getCategory(seat.categoryId);
     return sum + (cat ? cat.priceCents : 0);
@@ -169,15 +130,16 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
 
     try {
       for (const seatId of selectedSeats) {
-        const ticket = tickets.find((t) => t.seatId === seatId);
+        const ticket = tickets?.find((t) => t.seatId === seatId);
         if (!ticket) continue;
         await reserveTicket(token, ticket.id);
       }
       alert("Места успешно забронированы!");
 
-      const reservedTickets = tickets
-        .filter((t) => selectedSeats.includes(t.seatId))
-        .map((t) => t.id);
+      const reservedTickets =
+        tickets
+          ?.filter((t) => selectedSeats.includes(t.seatId))
+          .map((t) => t.id) || [];
 
       const purchases = await createPurchase(token, {
         ticketIds: reservedTickets,
@@ -207,16 +169,8 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
       setExpiryDate("");
       setCvv("");
       setCardHolderName("");
-      const tickets = await getTickets(selectedSession!.id);
-      setTickets(
-        tickets.map((ticket) => ({
-          id: ticket.id,
-          categoryId: ticket.categoryId,
-          priceCents: ticket.priceCents,
-          seatId: ticket.seatId,
-          status: ticket.status as Ticket["status"],
-        })),
-      );
+      refetchTickets();
+      refetchHall();
     } catch (err) {
       console.error("Ошибка оплаты:", err);
       alert("Ошибка оплаты. Проверьте данные карты.");
@@ -257,7 +211,6 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                 onChange={(e) => {
                   setSelectedDate(e.target.value);
                   setSelectedSession(null);
-                  setHallPlan(null);
                 }}
               />
             </div>
@@ -291,14 +244,14 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
             {selectedSession && (
               <div className="mt-4">
                 <h5 className="text-light mb-3">Схема зала:</h5>
-                {loadingPlan && <p>Загрузка плана зала...</p>}
-                {hallPlan && (
+                {loadingHall && <p>Загрузка плана зала...</p>}
+                {hall && (
                   <div
                     className="d-flex flex-column align-items-center mb-4"
                     style={{ gap: "10px" }}
                   >
                     <div className="d-flex flex-wrap justify-content-center gap-4 mb-3">
-                      {hallPlan.categories.map((c) => (
+                      {hall.plan.categories.map((c) => (
                         <div
                           key={c.id}
                           className="d-flex align-items-center gap-1"
@@ -348,10 +301,10 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                       </div>
                     </div>
 
-                    {Array.from(new Set(hallPlan.seats.map((s) => s.row)))
+                    {Array.from(new Set(hall.plan.seats.map((s) => s.row)))
                       .sort((a, b) => a - b)
                       .map((rowNum) => {
-                        const rowSeats = hallPlan.seats
+                        const rowSeats = hall.plan.seats
                           .filter((s) => s.row === rowNum)
                           .sort((a, b) => a.number - b.number);
 
@@ -397,15 +350,15 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                   </div>
                 )}
 
-                {selectedSeats.length > 0 && hallPlan && !purchase && (
+                {selectedSeats.length > 0 && hall && !purchase && (
                   <div className="text-center mb-3">
                     <p>
                       <strong>Выбраны места:</strong>{" "}
                       {selectedSeats
                         .map((id) => {
-                          const ticket = tickets.find((t) => t.seatId === id);
-                          if (!ticket || !hallPlan) return "";
-                          const seat = hallPlan.seats.find((s) => s.id === id);
+                          const ticket = tickets?.find((t) => t.seatId === id);
+                          if (!ticket || !hall) return "";
+                          const seat = hall.plan.seats.find((s) => s.id === id);
                           if (!seat) return "";
                           const cat = getCategory(ticket.categoryId);
                           return `Ряд ${seat.row + 1}, №${seat.number} (${
@@ -427,16 +380,16 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                   </div>
                 )}
 
-                {purchase && hallPlan && (
+                {purchase && hall && (
                   <div className="text-center mt-4 p-3 border border-light rounded">
                     <h5>Оплата</h5>
                     <p>
                       <strong>Места:</strong>{" "}
                       {tickets
-                        .filter((t) => purchase.ticketIds.includes(t.id))
+                        ?.filter((t) => purchase.ticketIds.includes(t.id))
                         .map((t) => {
                           const cat = getCategory(t.categoryId);
-                          const seat = hallPlan.seats.find(
+                          const seat = hall.plan.seats.find(
                             (s) => s.id === t.seatId,
                           );
                           return seat
@@ -450,7 +403,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                     <p>
                       <strong>Сумма:</strong>{" "}
                       {tickets
-                        .filter((t) => purchase.ticketIds.includes(t.id))
+                        ?.filter((t) => purchase.ticketIds.includes(t.id))
                         .reduce((sum, t) => {
                           const cat = getCategory(t.categoryId);
                           return sum + (cat ? cat.priceCents : 0);

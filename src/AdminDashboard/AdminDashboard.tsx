@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import MoviesManagement from "./MoviesManagement";
 import HallsManagement from "./HallsManagement";
 import CategoriesManagement from "./CategoriesManagement";

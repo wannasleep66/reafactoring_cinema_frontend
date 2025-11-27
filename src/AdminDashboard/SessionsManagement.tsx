@@ -5,9 +5,9 @@ import {
   getSesssions,
   createSession,
   updateSession,
-  type Session,
   deleteSession,
 } from "../api/session";
+import { useQuery } from "../hooks/query";
 
 type SessionFormSchema = {
   id?: string;
@@ -25,30 +25,17 @@ interface SessionsManagementProps {
 }
 
 export default function SessionsManagement({ token }: SessionsManagementProps) {
-  const [movies, setMovies] = useState<Film[]>([]);
-  const [halls, setHalls] = useState<Hall[]>([]);
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const { data: movies } = useQuery({
+    queryFn: () => getFilms().then((res) => res.data),
+  });
+  const { data: halls } = useQuery({
+    queryFn: () => getHalls(token).then((res) => res.data),
+  });
+  const { data: sessions, refetch: refetchSessions } = useQuery({
+    queryFn: () =>
+      getSesssions(token, { page: 0, size: 50 }).then((res) => res.data),
+  });
   const [editing, setEditing] = useState<SessionFormSchema | null>(null);
-
-  const fetchSessions = async () => {
-    if (!token) return;
-    const { data } = await getSesssions(token, { page: 0, size: 50 });
-    setSessions(data);
-  };
-
-  useEffect(() => {
-    if (!token) return;
-    const fetchMoviesAndHalls = async () => {
-      const [moviesResponse, hallsResponse] = await Promise.all([
-        getFilms({ page: 0, size: 50 }),
-        getHalls(token),
-      ]);
-      setMovies(moviesResponse.data);
-      setHalls(hallsResponse.data);
-    };
-    fetchMoviesAndHalls();
-    fetchSessions();
-  }, [token]);
 
   const handleSave = async (session: SessionFormSchema) => {
     if (!token) return;
@@ -58,7 +45,7 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
       } else {
         await createSession(token, session);
       }
-      await fetchSessions();
+      await refetchSessions();
       setEditing(null);
     } catch (err) {
       console.error(err);
@@ -70,7 +57,7 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
     if (!token || !window.confirm("Удалить этот сеанс?")) return;
     try {
       await deleteSession(token, id);
-      setSessions(sessions.filter((s) => s.id !== id));
+      await refetchSessions();
     } catch (err) {
       console.error(err);
       alert("Не удалось удалить сеанс");
@@ -86,8 +73,8 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
         onClick={() =>
           setEditing({
             id: "",
-            filmId: movies[0]?.id || "",
-            hallId: halls[0]?.id || "",
+            filmId: movies?.[0]?.id || "",
+            hallId: halls?.[0]?.id || "",
             startAt: new Date().toISOString().slice(0, 16),
             periodicConfig: undefined,
           })
@@ -99,26 +86,26 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
       {editing && (
         <SessionForm
           session={editing}
-          movies={movies}
-          halls={halls}
+          movies={movies || []}
+          halls={halls || []}
           onSave={handleSave}
           onCancel={() => setEditing(null)}
         />
       )}
 
-      {sessions.length === 0 ? (
+      {sessions?.length === 0 ? (
         <p>Сеансов пока нет.</p>
       ) : (
         <div className="row">
-          {sessions.map((s) => (
+          {sessions?.map((s) => (
             <div key={s.id} className="col-md-6 mb-3">
               <div className="card shadow-sm p-3 text-light">
                 <strong>
-                  {movies.find((m) => m.id === s.filmId)?.title || s.filmId}
+                  {movies?.find((m) => m.id === s.filmId)?.title || s.filmId}
                 </strong>{" "}
                 —{" "}
                 <em>
-                  {halls.find((h) => h.id === s.hallId)?.name || s.hallId}
+                  {halls?.find((h) => h.id === s.hallId)?.name || s.hallId}
                 </em>
                 <div>🕒 {new Date(s.startAt).toLocaleString()}</div>
                 <div className="mt-2 d-flex justify-content-between">

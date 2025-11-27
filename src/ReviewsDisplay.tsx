@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
 import { getFilmReviews } from "./api/reviews";
+import { useQuery } from "./hooks/query";
 
 interface Review {
   id: string;
@@ -15,36 +15,23 @@ interface Props {
 }
 
 export default function ReviewsDisplay({ movieId }: Props) {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        setLoading(true);
-        const { data } = await getFilmReviews(movieId);
-        setReviews(data);
-      } catch (err) {
-        console.error(err);
-        setError("Ошибка загрузки отзывов");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchReviews();
-  }, [movieId]);
+  const {
+    data: reviews,
+    loading,
+    error,
+  } = useQuery<Review[], string>({
+    queryFn: () => getFilmReviews(movieId).then((res) => res.data),
+  });
 
   if (loading) return <p className="text-light mt-3">Загрузка отзывов...</p>;
   if (error) return <p className="text-danger mt-3">{error}</p>;
-  if (reviews.length === 0)
+  if (reviews?.length === 0)
     return <p className="text-light mt-3">Нет отзывов для этого фильма.</p>;
 
   return (
     <div className="mt-4">
       <h4 className="text-light mb-3">Отзывы</h4>
-      {reviews.map((r) => (
+      {reviews?.map((r) => (
         <div
           key={r.id}
           className="card mb-2 p-3 bg-secondary text-light shadow-sm"
