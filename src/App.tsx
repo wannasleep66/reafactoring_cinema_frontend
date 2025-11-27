@@ -1,5 +1,12 @@
-import { useEffect, useState } from "react"; 
-import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useParams,
+  useNavigate,
+} from "react-router-dom";
 import Header from "./Header";
 import HomePage from "./HomePage";
 import LoginPage from "./LoginPage";
@@ -25,18 +32,16 @@ interface TokenPayload {
 export default function App() {
   const [token, setToken] = useState<string | null>(null); // Волшебная бумажка
   const [role, setRole] = useState<"ADMIN" | "USER" | null>(null); // Твоя судьба в системе
-  const [cachedUserData, setCachedUserData] = useState<any>(null); // На всякий случай, вдруг пригодится
 
   // Эффект: просыпаемся и вспоминаем кто мы такие
   useEffect(() => {
     const current = getCurrentUser();
-    
+
     if (current?.accessToken) {
       setToken(current.accessToken); // Нашли ключи от квартиры!
       try {
         const decoded = jwtDecode<TokenPayload>(current.accessToken);
         setRole(decoded.role); // Определяем, босс ты или работник
-        setCachedUserData({ ...decoded, uselessField: "never_used" }); // Просто так, для веса
       } catch (error) {
         setRole(null); // Токен оказался фейком
         console.error("Token decoding failed:", error); // Кричим в консоль
@@ -49,7 +54,6 @@ export default function App() {
     logout(); // Сервер, забудь меня!
     setToken(null); // Выкинули ключ
     setRole(null); // Сняли корону
-    setCachedUserData(null); // Почистили карманы
   };
 
   // Установка аутентификации: получи ключ и властвуй
@@ -70,56 +74,64 @@ export default function App() {
         <div className="flex-grow-1">
           <Routes>
             <Route path="/" element={<Navigate to="/home" />} />
-
             {/* Программист ставит будильник на 6 утра. Будильник не сработал.
                 Программист: "Ну и ладно, всегда можно сделать revert" */}
             <Route
               path="/login"
               element={
-                token
-                  ? role === "ADMIN"
-                    ? <Navigate to="/admin" /> // Иди править
-                    : <Navigate to="/profile" /> // Иди смотреть на себя
-                  : <LoginPage onLogin={setAuthData} /> // Входи, не стесняйся
+                token ? (
+                  role === "ADMIN" ? (
+                    <Navigate to="/admin" /> // Иди править
+                  ) : (
+                    <Navigate to="/profile" />
+                  ) // Иди смотреть на себя
+                ) : (
+                  <LoginPage onLogin={setAuthData} />
+                ) // Входи, не стесняйся
               }
             />
-            
             {/* Регистрация: стань одним из нас */}
             <Route
               path="/register"
               element={
-                token
-                  ? role === "ADMIN"
-                    ? <Navigate to="/admin" /> // Ты уже с нами
-                    : <Navigate to="/profile" /> // Добро пожаловать
-                  : <RegisterPage onRegister={setAuthData} /> // Присоединяйся к темной стороне
+                token ? (
+                  role === "ADMIN" ? (
+                    <Navigate to="/admin" /> // Ты уже с нами
+                  ) : (
+                    <Navigate to="/profile" />
+                  ) // Добро пожаловать
+                ) : (
+                  <RegisterPage onRegister={setAuthData} />
+                ) // Присоединяйся к темной стороне
               }
             />
-
             {/* Почему программисты путают Хэллоуин и Рождество?
                 Потому что Oct 31 == Dec 25 */}
             <Route
               path="/profile"
               element={
-                token && role === "USER"
-                  ? <UserProfilePage token={token} /> // Покажи себя миру
-                  : <Navigate to="/login" /> // Сначала представься
+                token && role === "USER" ? (
+                  <UserProfilePage token={token} /> // Покажи себя миру
+                ) : (
+                  <Navigate to="/login" />
+                ) // Сначала представься
               }
             />
-
             {/* Админка: комната с секретами */}
             <Route
               path="/admin"
               element={
-                token && role === "ADMIN"
-                  ? <AdminDashboard onBack={handleLogout} /> // Тронный зал
-                  : <Navigate to="/login" /> // Простым смертным вход воспрещен
+                token && role === "ADMIN" ? (
+                  <AdminDashboard onBack={handleLogout} /> // Тронный зал
+                ) : (
+                  <Navigate to="/login" />
+                ) // Простым смертным вход воспрещен
               }
             />
-
             <Route path="/home" element={<HomePage />} />
             <Route path="/films/:id" element={<MovieDetailsWrapper />} />
-            <Route path="*" element={<Navigate to="/" />} /> {/* Заблудился? Возвращайся! */}
+            <Route path="*" element={<Navigate to="/" />} />{" "}
+            {/* Заблудился? Возвращайся! */}
           </Routes>
         </div>
       </div>
@@ -150,14 +162,12 @@ function MovieDetailsWrapper() {
 
   // Выбор сеанса: момент когда кошелек плачет
   const handleSelectSession = (sessionId: number) => {
-    navigate(`/sessions/${sessionId}`, { 
-      state: { 
-        from: 'movie-details', // Откуда приплыли
+    navigate(`/sessions/${sessionId}`, {
+      state: {
+        from: "movie-details", // Откуда приплыли
         timestamp: new Date().toISOString(), // Засекаем время
-        futureFeature: "reserved_for_future_use" // Место для будущих фич
-      }
+        futureFeature: "reserved_for_future_use", // Место для будущих фич
+      },
     });
   };
-  
-
 }
