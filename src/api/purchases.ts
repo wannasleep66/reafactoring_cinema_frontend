@@ -22,31 +22,24 @@ export type PurchaseListResponse = {
   pagination: Pagination;
 };
 
-export async function getPurchases(token: string, params?: PaginationQuery) {
+export async function getPurchases(params?: PaginationQuery) {
   const { data } = await api.get<PurchaseListResponse>("/purchases", {
-    headers: { Authorization: `Bearer ${token}` },
     params,
   });
   return data;
 }
 
-export async function getPurchase(token: string, id: Purchase["id"]) {
-  const { data } = await api.get<Purchase>(`/purchases/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function getPurchase(id: Purchase["id"]) {
+  const { data } = await api.get<Purchase>(`/purchases/${id}`);
   return data;
 }
 
-export async function createPurchase(token: string, purchase: PurchaseCreate) {
-  const { data } = await api.post<Purchase>("/purchases", purchase, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function createPurchase(purchase: PurchaseCreate) {
+  const { data } = await api.post<Purchase>("/purchases", purchase);
   return data;
 }
 
-export async function cancelPurchase(token: string, id: Purchase["id"]) {
-  const { data } = await api.post<Purchase>(`/purchases/${id}/cancel`, null, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function cancelPurchase(id: Purchase["id"]) {
+  const { data } = await api.post<Purchase>(`/purchases/${id}/cancel`, null);
   return data;
 }

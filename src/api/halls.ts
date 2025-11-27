@@ -53,10 +53,8 @@ export type HallUpdate = {
   number: number;
 };
 
-export async function getHalls(token: string) {
-  const { data } = await api.get<HallListResponse>("/halls", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function getHalls() {
+  const { data } = await api.get<HallListResponse>("/halls");
   return data;
 }
 
@@ -69,24 +67,14 @@ export async function getHall(id: Hall["id"]): Promise<HallDetails> {
   };
 }
 
-export async function createHall(token: string, input: HallCreate) {
-  await api.post("/halls", input, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function createHall(input: HallCreate) {
+  await api.post("/halls", input);
 }
 
-export async function updateHall(
-  token: string,
-  id: Hall["id"],
-  input: HallUpdate,
-) {
-  await api.put(`/halls/${id}`, input, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function updateHall(id: Hall["id"], input: HallUpdate) {
+  await api.put(`/halls/${id}`, input);
 }
 
-export async function deleteHall(token: string, id: Hall["id"]) {
-  await api.delete(`/halls/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function deleteHall(id: Hall["id"]) {
+  await api.delete(`/halls/${id}`);
 }

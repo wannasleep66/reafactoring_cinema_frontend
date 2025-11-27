@@ -1,37 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import MoviesManagement from "./MoviesManagement";
 import HallsManagement from "./HallsManagement";
 import CategoriesManagement from "./CategoriesManagement";
 import SessionsManagement from "./SessionsManagement";
 
-interface AdminPanelProps {
-  onBack: () => void;
-}
-
-export default function AdminDashboard({ onBack }: AdminPanelProps) {
+export default function AdminDashboard() {
   const [section, setSection] = useState<
     "movies" | "halls" | "categories" | "sessions"
   >("movies");
-  const [token, setToken] = useState<string>("");
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    if (storedToken) setToken(storedToken);
-  }, []);
-
-  if (!token) {
-    return (
-      <div className="container p-4">
-        <p className="text-danger">
-          Требуется авторизация. Пожалуйста, войдите.
-        </p>
-        <button className="btn btn-primary" onClick={onBack}>
-          ⬅ Назад
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="d-flex min-vh-100 bg-dark text-light">
       <div
@@ -76,10 +52,10 @@ export default function AdminDashboard({ onBack }: AdminPanelProps) {
       </div>
 
       <div className="flex-grow-1 bg-light text-dark p-4 overflow-auto">
-        {section === "movies" && <MoviesManagement token={token} />}
-        {section === "halls" && <HallsManagement token={token} />}
-        {section === "categories" && <CategoriesManagement token={token} />}
-        {section === "sessions" && <SessionsManagement token={token} />}
+        {section === "movies" && <MoviesManagement />}
+        {section === "halls" && <HallsManagement />}
+        {section === "categories" && <CategoriesManagement />}
+        {section === "sessions" && <SessionsManagement />}
       </div>
     </div>
   );

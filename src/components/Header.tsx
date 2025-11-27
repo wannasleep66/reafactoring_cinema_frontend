@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "../store/auth";
 
-interface HeaderProps {
-  token: string | null;
-  onLogout: () => void;
-}
+export default function Header() {
+  const { session, clearSession } = useAuth();
 
-export default function Header({ token, onLogout }: HeaderProps) {
+  const handleLogout = () => {
+    clearSession();
+  };
+
   return (
     <header className="d-flex justify-content-between align-items-center p-3 bg-dark text-light">
       <h2>🎞 My Cinema</h2>
@@ -13,12 +15,15 @@ export default function Header({ token, onLogout }: HeaderProps) {
         <Link to="/home" className="text-light me-3">
           Главная
         </Link>
-        {token ? (
+        {session?.token ? (
           <>
             <Link to="/profile" className="text-light me-3">
               Профиль
             </Link>
-            <button onClick={onLogout} className="btn btn-outline-light btn-sm">
+            <button
+              onClick={handleLogout}
+              className="btn btn-outline-light btn-sm"
+            >
               Выйти
             </button>
           </>

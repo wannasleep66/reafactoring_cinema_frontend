@@ -8,3 +8,8 @@ export const api = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+api.interceptors.request.use((config) => {
+  config.headers.Authorization = `Bearer ${localStorage.getItem("token")}`;
+  return config;
+});

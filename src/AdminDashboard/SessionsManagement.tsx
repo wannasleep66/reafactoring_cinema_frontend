@@ -20,30 +20,24 @@ type SessionFormSchema = {
   };
 };
 
-interface SessionsManagementProps {
-  token: string;
-}
-
-export default function SessionsManagement({ token }: SessionsManagementProps) {
+export default function SessionsManagement() {
   const { data: movies } = useQuery({
     queryFn: () => getFilms().then((res) => res.data),
   });
   const { data: halls } = useQuery({
-    queryFn: () => getHalls(token).then((res) => res.data),
+    queryFn: () => getHalls().then((res) => res.data),
   });
   const { data: sessions, refetch: refetchSessions } = useQuery({
-    queryFn: () =>
-      getSesssions(token, { page: 0, size: 50 }).then((res) => res.data),
+    queryFn: () => getSesssions({ page: 0, size: 50 }).then((res) => res.data),
   });
   const [editing, setEditing] = useState<SessionFormSchema | null>(null);
 
   const handleSave = async (session: SessionFormSchema) => {
-    if (!token) return;
     try {
       if (session.id) {
-        await updateSession(token, session.id, session);
+        await updateSession(session.id, session);
       } else {
-        await createSession(token, session);
+        await createSession(session);
       }
       await refetchSessions();
       setEditing(null);
@@ -54,9 +48,9 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token || !window.confirm("Удалить этот сеанс?")) return;
+    if (!window.confirm("Удалить этот сеанс?")) return;
     try {
-      await deleteSession(token, id);
+      await deleteSession(id);
       await refetchSessions();
     } catch (err) {
       console.error(err);
@@ -161,7 +155,7 @@ function SessionForm({
   }, [isPeriodic, form.startAt]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>,
+    e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
   ) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });

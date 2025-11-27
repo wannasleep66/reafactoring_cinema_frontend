@@ -1,5 +1,5 @@
-import { getFilmReviews } from "./api/reviews";
-import { useQuery } from "./hooks/query";
+import { getFilmReviews } from "../api/reviews";
+import { useQuery } from "../hooks/query";
 
 interface Review {
   id: string;

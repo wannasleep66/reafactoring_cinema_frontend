@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { getSession } from "./api/session";
-import { getHall } from "./api/halls";
-import { useQuery } from "./hooks/query";
+import { getSession } from "../api/session";
+import { getHall } from "../api/halls";
+import { useQuery } from "../hooks/query";
 
 interface Props {
   sessionId: string;
@@ -44,7 +44,7 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
     setSelectedSeats((prev) =>
       prev.includes(seatId)
         ? prev.filter((id) => id !== seatId)
-        : [...prev, seatId],
+        : [...prev, seatId]
     );
   };
 
@@ -65,7 +65,7 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
   }
 
   const rows = Array.from(new Set(plan.seats.map((s) => s.row))).sort(
-    (a, b) => a - b,
+    (a, b) => a - b
   );
   const getCategory = (catId: string) =>
     plan.categories.find((c) => c.id === catId);

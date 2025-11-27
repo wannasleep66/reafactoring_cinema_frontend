@@ -1,9 +1,9 @@
 import { useState } from "react";
 
-import MovieCard from "./MovieCard";
+import MovieCard from "../components/MovieCard";
 import MovieDetailsPage from "./MovieDetailsPage";
-import { getFilms, type Film } from "./api/movie";
-import { useQuery } from "./hooks/query";
+import { getFilms, type Film } from "../api/movie";
+import { useQuery } from "../hooks/query";
 
 export default function HomePage() {
   const { data: films } = useQuery({

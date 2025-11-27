@@ -7,30 +7,22 @@ import {
 } from "../api/categories";
 import { useQuery } from "../hooks/query";
 
-interface CategoriesManagementProps {
-  token: string;
-}
-
-export default function CategoriesManagement({
-  token,
-}: CategoriesManagementProps) {
+export default function CategoriesManagement() {
   const { data: categories, refetch: refetchCategories } = useQuery({
-    queryFn: () =>
-      getCategories(token, { page: 0, size: 20 }).then((res) => res.data),
+    queryFn: () => getCategories({ page: 0, size: 20 }).then((res) => res.data),
   });
 
   const [editing, setEditing] = useState<CategoryFormSchema | null>(null);
 
   const handleSave = async (cat: CategoryFormSchema) => {
-    if (!token) return;
     if (!cat.name?.trim()) return alert("Введите название категории");
     if ((cat.priceCents ?? 0) <= 0) return alert("Цена должна быть больше 0");
 
     try {
       if (cat.id) {
-        await updateCategory(token, cat.id, cat);
+        await updateCategory(cat.id, cat);
       } else {
-        await createCategory(token, cat);
+        await createCategory(cat);
       }
 
       refetchCategories();
@@ -42,10 +34,10 @@ export default function CategoriesManagement({
   };
 
   const handleDelete = async (id: string) => {
-    if (!token || !window.confirm("Удалить эту категорию?")) return;
+    if (!window.confirm("Удалить эту категорию?")) return;
 
     try {
-      await deleteCategory(token, id);
+      await deleteCategory(id);
       refetchCategories();
     } catch (err) {
       console.error(err);

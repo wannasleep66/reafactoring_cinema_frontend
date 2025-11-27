@@ -1,22 +1,20 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "./api/auth";
+import { loginUser } from "../api/auth";
+import { useAuth } from "../store/auth";
 
-interface Props {
-  onLogin: (token: { accessToken: string }) => void;
-}
-
-export default function LoginPage({ onLogin }: Props) {
+export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const { setSession } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = await loginUser({ email, password });
-      onLogin(token);
+      const { accessToken } = await loginUser({ email, password });
+      setSession(accessToken);
       navigate("/profile");
     } catch {
       setError("Неверные данные");

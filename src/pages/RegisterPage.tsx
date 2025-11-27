@@ -1,12 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { registerUser } from "./api/auth";
+import { registerUser } from "../api/auth";
+import { useAuth } from "../store/auth";
 
-interface Props {
-  onRegister: (token: { accessToken: string }) => void;
-}
-
-export default function RegisterPage({ onRegister }: Props) {
+export default function RegisterPage() {
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -16,10 +13,11 @@ export default function RegisterPage({ onRegister }: Props) {
     gender: "MALE" as "MALE" | "FEMALE",
   });
   const [error, setError] = useState("");
+  const { setSession } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -27,8 +25,8 @@ export default function RegisterPage({ onRegister }: Props) {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = await registerUser(form);
-      onRegister(token);
+      const { accessToken } = await registerUser(form);
+      setSession(accessToken);
       navigate("/");
     } catch {
       setError("Ошибка регистрации");

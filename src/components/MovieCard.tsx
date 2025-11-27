@@ -1,8 +1,8 @@
 import React from "react";
-import * as movie from "./api/movie";
+import type { Film } from "../api/movie";
 
 interface Props {
-  movie: movie.Film;
+  movie: Film;
   onSelect: () => void;
 }
 
@@ -22,8 +22,7 @@ const MovieCard: React.FC<Props> = ({ movie, onSelect }) => (
       <p className="card-text">{movie.description.slice(0, 50)}...</p>
       <p className="card-text">
         <small>
-          {movie.genre || "Жанр"} • {movie.durationMinutes} мин •{" "}
-          {movie.ageRating}
+          • {movie.durationMinutes} мин • {movie.ageRating}
         </small>
       </p>
     </div>

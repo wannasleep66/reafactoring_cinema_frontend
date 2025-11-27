@@ -19,7 +19,7 @@ export type GetTicketQuery = {
 
 export async function getTickets(
   sessionId: Session["id"],
-  params?: GetTicketQuery,
+  params?: GetTicketQuery
 ) {
   const { data } = await api.get<Ticket[]>(`/sessions/${sessionId}/tickets`, {
     params,
@@ -27,20 +27,12 @@ export async function getTickets(
   return data;
 }
 
-export async function reserveTicket(token: string, id: Ticket["id"]) {
-  const { data } = await api.post<Ticket>(`/tickets/${id}/reserve`, null, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export async function reserveTicket(id: Ticket["id"]) {
+  const { data } = await api.post<Ticket>(`/tickets/${id}/reserve`);
   return data;
 }
 
-export async function cancelReservation(token: string, id: Ticket["id"]) {
-  const { data } = await api.post<Ticket>(`/tickets/${id}/cancel`, null, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export async function cancelReservation(id: Ticket["id"]) {
+  const { data } = await api.post<Ticket>(`/tickets/${id}/cancel`);
   return data;
 }
