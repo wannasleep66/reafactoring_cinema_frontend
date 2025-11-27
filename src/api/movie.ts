@@ -2,26 +2,6 @@ import { api, API_URL } from "./http";
 import type { Media } from "./media";
 import type { Pagination, PaginationQuery } from "./pagination";
 
-export const MOCK_FILMS: Film[] = [
-  {
-    id: "1",
-    title: "Интерстеллар",
-    description:
-      "Фантастический фильм о путешествиях во времени и пространстве.",
-    durationMinutes: 169,
-    ageRating: "12+",
-    imageUrl: "https://via.placeholder.com/150",
-  },
-  {
-    id: "2",
-    title: "Начало",
-    description: "Фильм о снах и подсознании, режиссёр Кристофер Нолан.",
-    durationMinutes: 148,
-    ageRating: "12+",
-    imageUrl: "https://via.placeholder.com/150",
-  },
-];
-
 export type FilmAgeRating = "0+" | "6+" | "12+" | "16+" | "18+";
 
 export type FilmResponse = {
