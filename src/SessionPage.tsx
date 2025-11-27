@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { getSession } from "./api/session";
 import { getHall } from "./api/halls";
+import { useQuery } from "./hooks/query";
 
 interface Props {
   sessionId: string;
@@ -29,24 +30,15 @@ export interface HallPlan {
 }
 
 const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
-  const [plan, setPlan] = useState<HallPlan | null>(null);
-  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: plan, loading } = useQuery({
+    queryFn: async () => {
+      const session = await getSession(sessionId);
+      const plan = await getHall(session.hallId);
+      return { ...plan.plan, hallId: plan.id };
+    },
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const session = await getSession(sessionId);
-        const planData = await getHall(session.hallId);
-        setPlan({ ...planData.plan, hallId: planData.id });
-      } catch (err) {
-        console.error("Ошибка загрузки данных:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [sessionId]);
+  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
 
   const handleSeatClick = (seatId: string) => {
     setSelectedSeats((prev) =>

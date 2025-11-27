@@ -4,8 +4,8 @@ import {
   deleteCategory,
   getCategories,
   updateCategory,
-  type SeatCategory,
 } from "../api/categories";
+import { useQuery } from "../hooks/query";
 
 interface CategoriesManagementProps {
   token: string;
@@ -14,22 +14,12 @@ interface CategoriesManagementProps {
 export default function CategoriesManagement({
   token,
 }: CategoriesManagementProps) {
-  const [categories, setCategories] = useState<SeatCategory[]>([]);
+  const { data: categories, refetch: refetchCategories } = useQuery({
+    queryFn: () =>
+      getCategories(token, { page: 0, size: 20 }).then((res) => res.data),
+  });
+
   const [editing, setEditing] = useState<CategoryFormSchema | null>(null);
-
-  const fetchCategories = async () => {
-    if (!token) return;
-    try {
-      const { data } = await getCategories(token, { page: 0, size: 20 });
-      setCategories(data);
-    } catch (err) {
-      console.error("Ошибка загрузки категорий:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, [token]);
 
   const handleSave = async (cat: CategoryFormSchema) => {
     if (!token) return;
@@ -43,7 +33,7 @@ export default function CategoriesManagement({
         await createCategory(token, cat);
       }
 
-      await fetchCategories();
+      refetchCategories();
       setEditing(null);
     } catch (err) {
       console.error(err);
@@ -56,7 +46,7 @@ export default function CategoriesManagement({
 
     try {
       await deleteCategory(token, id);
-      setCategories(categories.filter((c) => c.id !== id));
+      refetchCategories();
     } catch (err) {
       console.error(err);
       alert("Не удалось удалить категорию");
@@ -83,7 +73,7 @@ export default function CategoriesManagement({
       )}
 
       <ul className="list-group">
-        {categories.map((c) => (
+        {categories?.map((c) => (
           <li
             key={c.id}
             className="list-group-item d-flex justify-content-between align-items-center"

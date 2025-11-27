@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   createFilm,
   deleteFilm,
   getFilms,
   updateFilm,
-  type Film,
   type FilmAgeRating,
 } from "../api/movie";
+import { useQuery } from "../hooks/query";
 
 type MovieFormSchema = {
   id?: string;
@@ -21,22 +21,11 @@ interface MoviesManagementProps {
 }
 
 export default function MoviesManagement({ token }: MoviesManagementProps) {
-  const [movies, setMovies] = useState<Film[]>([]);
+  const { data: movies, refetch } = useQuery({
+    queryFn: () => getFilms({ page: 0, size: 100 }).then((res) => res.data),
+  });
+
   const [editing, setEditing] = useState<MovieFormSchema | null>(null);
-
-  const fetchMovies = async () => {
-    if (!token) return;
-    try {
-      const { data } = await getFilms();
-      setMovies(data);
-    } catch (err) {
-      console.error("Ошибка загрузки фильмов:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchMovies();
-  }, [token]);
 
   const handleSave = async (movie: MovieFormSchema) => {
     if (!token) return;
@@ -47,7 +36,7 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
         const data = await createFilm(token, movie);
         movie.id = data.id;
       }
-      await fetchMovies();
+      refetch();
       setEditing(null);
     } catch (err) {
       console.error("Ошибка сохранения фильма:", err);
@@ -58,7 +47,7 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
     if (!token || !window.confirm("Удалить этот фильм?")) return;
     try {
       await deleteFilm(token, id);
-      setMovies(movies.filter((m) => m.id !== id));
+      refetch();
     } catch (err) {
       console.error("Ошибка удаления фильма:", err);
     }
@@ -91,11 +80,11 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
         />
       )}
 
-      {movies.length === 0 ? (
+      {movies?.length === 0 ? (
         <p>Нет фильмов. Добавьте новый.</p>
       ) : (
         <div className="row">
-          {movies.map((m) => (
+          {movies?.map((m) => (
             <div key={m.id} className="col-md-6 col-lg-4 mb-3">
               <div className="card shadow-sm">
                 <div className="card-body">

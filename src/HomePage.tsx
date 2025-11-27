@@ -1,22 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 import MovieCard from "./MovieCard";
 import MovieDetailsPage from "./MovieDetailsPage";
 import { getFilms, type Film } from "./api/movie";
+import { useQuery } from "./hooks/query";
 
 export default function HomePage() {
-  const [films, setFilms] = useState<Film[]>([]);
-  const [selectedFilm, setSelectedFilm] = useState<Film | null>(null);
+  const { data: films } = useQuery({
+    queryFn: () => getFilms().then((res) => res.data),
+  });
 
-  useEffect(() => {
-    getFilms()
-      .then((filmsData) => {
-        setFilms(filmsData.data);
-      })
-      .catch((error) => {
-        console.error("Ошибка загрузки фильмов:", error);
-      });
-  }, []);
+  const [selectedFilm, setSelectedFilm] = useState<Film | null>(null);
 
   const handleFilmSelect = (film: Film) => {
     setSelectedFilm(film);
@@ -32,19 +26,15 @@ export default function HomePage() {
     );
   }
 
-  const renderMovieCards = () => {
-    return films.map((film) => (
-      <MovieCard
-        key={film.id}
-        movie={film}
-        onSelect={() => handleFilmSelect(film)}
-      />
-    ));
-  };
-
   return (
     <div className="container py-5 d-flex flex-wrap gap-4 justify-content-center">
-      {renderMovieCards()}
+      {films?.map((film) => (
+        <MovieCard
+          key={film.id}
+          movie={film}
+          onSelect={() => handleFilmSelect(film)}
+        />
+      ))}
     </div>
   );
 }
