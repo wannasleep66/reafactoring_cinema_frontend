@@ -1,13 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { getFilms, type Film } from "../api/movie";
-import { getHalls, type Hall } from "../api/halls";
-import {
-  getSesssions,
-  createSession,
-  updateSession,
-  deleteSession,
-} from "../api/session";
-import { useQuery } from "../hooks/query";
+import type { Film } from "../api/movie";
+import type { Hall } from "../api/halls";
 
 type SessionFormSchema = {
   id?: string;
@@ -20,127 +13,26 @@ type SessionFormSchema = {
   };
 };
 
-export default function SessionsManagement() {
-  const { data: movies } = useQuery({
-    queryFn: () => getFilms().then((res) => res.data),
-  });
-  const { data: halls } = useQuery({
-    queryFn: () => getHalls().then((res) => res.data),
-  });
-  const { data: sessions, refetch: refetchSessions } = useQuery({
-    queryFn: () => getSesssions({ page: 0, size: 50 }).then((res) => res.data),
-  });
-  const [editing, setEditing] = useState<SessionFormSchema | null>(null);
-
-  const handleSave = async (session: SessionFormSchema) => {
-    try {
-      if (session.id) {
-        await updateSession(session.id, session);
-      } else {
-        await createSession(session);
-      }
-      await refetchSessions();
-      setEditing(null);
-    } catch (err) {
-      console.error(err);
-      alert("Не удалось сохранить сеанс");
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Удалить этот сеанс?")) return;
-    try {
-      await deleteSession(id);
-      await refetchSessions();
-    } catch (err) {
-      console.error(err);
-      alert("Не удалось удалить сеанс");
-    }
-  };
-
-  return (
-    <div className="container-fluid">
-      <h2 className="text-primary mb-4">🎬 Управление сеансами</h2>
-
-      <button
-        className="btn btn-success mb-3"
-        onClick={() =>
-          setEditing({
-            id: "",
-            filmId: movies?.[0]?.id || "",
-            hallId: halls?.[0]?.id || "",
-            startAt: new Date().toISOString().slice(0, 16),
-            periodicConfig: undefined,
-          })
-        }
-      >
-        ➕ Добавить сеанс
-      </button>
-
-      {editing && (
-        <SessionForm
-          session={editing}
-          movies={movies || []}
-          halls={halls || []}
-          onSave={handleSave}
-          onCancel={() => setEditing(null)}
-        />
-      )}
-
-      {sessions?.length === 0 ? (
-        <p>Сеансов пока нет.</p>
-      ) : (
-        <div className="row">
-          {sessions?.map((s) => (
-            <div key={s.id} className="col-md-6 mb-3">
-              <div className="card shadow-sm p-3 text-light">
-                <strong>
-                  {movies?.find((m) => m.id === s.filmId)?.title || s.filmId}
-                </strong>{" "}
-                —{" "}
-                <em>
-                  {halls?.find((h) => h.id === s.hallId)?.name || s.hallId}
-                </em>
-                <div>🕒 {new Date(s.startAt).toLocaleString()}</div>
-                <div className="mt-2 d-flex justify-content-between">
-                  <button
-                    className="btn btn-warning btn-sm"
-                    onClick={() => setEditing(s)}
-                  >
-                    ✏ Редактировать
-                  </button>
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => handleDelete(s.id)}
-                  >
-                    🗑 Удалить
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-interface SessionFormProps {
-  session: SessionFormSchema;
+interface SessionCreateFormProps {
   movies: Film[];
   halls: Hall[];
   onSave: (session: SessionFormSchema) => void;
   onCancel: () => void;
 }
 
-function SessionForm({
-  session,
+export default function SessionCreateForm({
   movies,
   halls,
   onSave,
   onCancel,
-}: SessionFormProps) {
-  const [form, setForm] = useState(session);
+}: SessionCreateFormProps) {
+  const [form, setForm] = useState<SessionFormSchema>({
+    id: "",
+    filmId: movies?.[0]?.id || "",
+    hallId: halls?.[0]?.id || "",
+    startAt: new Date().toISOString().slice(0, 16),
+    periodicConfig: undefined,
+  });
   const [isPeriodic, setIsPeriodic] = useState(false);
   const [period, setPeriod] = useState<"EVERY_DAY" | "EVERY_WEEK">("EVERY_DAY");
   const [periodEnd, setPeriodEnd] = useState("");
@@ -152,14 +44,8 @@ function SessionForm({
       date.setDate(date.getDate() + 7);
       setPeriodEnd(date.toISOString().slice(0, 16));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPeriodic, form.startAt]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
-  ) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-  };
 
   useEffect(() => {
     if (!isPeriodic || !periodEnd) {
@@ -183,11 +69,16 @@ function SessionForm({
     setSessionCount(count);
   }, [form.startAt, periodEnd, period, isPeriodic]);
 
+  const handleChange = (
+    e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
+
   return (
     <div className="card p-3 mb-4 shadow-sm">
-      <h5 className="mb-3 text-primary">
-        {session.id ? "Редактирование сеанса" : "Новый сеанс"}
-      </h5>
+      <h5 className="mb-3 text-primary">Новый сеанс</h5>
 
       <select
         name="filmId"
@@ -215,7 +106,7 @@ function SessionForm({
         ))}
       </select>
 
-      <label className="text-light ">Дата и время начала:</label>
+      <label className="text-light">Дата и время начала:</label>
       <input
         className="form-control mb-3"
         type="datetime-local"
@@ -224,7 +115,7 @@ function SessionForm({
         onChange={handleChange}
       />
 
-      <div className="form-check ">
+      <div className="form-check">
         <input
           type="checkbox"
           className="form-check-input"

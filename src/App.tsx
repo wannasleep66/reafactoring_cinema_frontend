@@ -10,7 +10,7 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import UserProfilePage from "./pages/UserProfilePage";
-import AdminDashboard from "./AdminDashboard/AdminDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import * as movie from "./api/movie";
 import { AdminRole, UserRole } from "./store/auth";
 import RootLayout from "./pages/layouts/RootLayout";
