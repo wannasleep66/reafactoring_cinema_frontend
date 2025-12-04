@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import * as movieApi from "../api/movie";
 import ReviewsDisplay from "../components/ReviewsDisplay";
-import { getSesssions } from "../api/session";
+import SessionSelector from "../components/SessionSelector";
+import SeatLegend from "../components/SeatLegend";
+import SeatGrid from "../components/SeatGrid";
+import BookingInfo from "../components/BookingInfo";
+import PaymentForm from "../components/PaymentForm";
+import { getSesssions, type Session } from "../api/session";
 import { getHall } from "../api/halls";
 import { getTickets, reserveTicket } from "../api/tickets";
 import { createPurchase } from "../api/purchases";
@@ -11,42 +16,6 @@ import { useQuery } from "../hooks/query";
 interface Props {
   movie: movieApi.Film;
   onBack: () => void;
-}
-
-interface Session {
-  id: string;
-  movieId: string;
-  hallId: string;
-  startAt: string;
-}
-
-interface Seat {
-  id: string;
-  row: number;
-  number: number;
-  categoryId: string;
-  status: string;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  priceCents: number;
-}
-
-interface HallPlan {
-  hallId: string;
-  rows: number;
-  seats: Seat[];
-  categories: Category[];
-}
-
-interface Ticket {
-  id: string;
-  seatId: string;
-  categoryId: string;
-  status: "AVAILABLE" | "RESERVED" | "SOLD";
-  priceCents: number;
 }
 
 interface Purchase {
@@ -81,39 +50,12 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
     },
   });
 
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
-  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
-
   const [purchase, setPurchase] = useState<Purchase | null>(null);
-
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiryDate, setExpiryDate] = useState("");
-  const [cvv, setCvv] = useState("");
-  const [cardHolderName, setCardHolderName] = useState("");
-
-  const filteredSessions =
-    sessions?.filter((s) => s.startAt.slice(0, 10) === selectedDate) || [];
-
-  const handleSeatClick = (seatId: string) => {
-    setSelectedSeats((prev) =>
-      prev.includes(seatId)
-        ? prev.filter((id) => id !== seatId)
-        : [...prev, seatId]
-    );
-  };
+  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
 
   const getCategory = (catId: string) =>
     hall?.plan.categories.find((c) => c.id === catId);
-
-  const getSeatStatus = (seatId: string): Ticket["status"] => {
-    return (
-      (tickets?.find((t) => t.seatId === seatId)?.status as Ticket["status"]) ||
-      "AVAILABLE"
-    );
-  };
 
   const totalPrice = selectedSeats.reduce((sum, id) => {
     const seat = hall?.plan.seats.find((s) => s.id === id);
@@ -146,22 +88,22 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
     }
   };
 
-  const handlePayment = async () => {
+  const handlePayment = async (cardData: {
+    cardNumber: string;
+    expiryDate: string;
+    cvv: string;
+    cardHolderName: string;
+  }) => {
     try {
       await processPayment({
         purchaseId: purchase!.id,
-        cardNumber,
-        expiryDate,
-        cvv,
-        cardHolderName,
+        cardNumber: cardData.cardNumber,
+        expiryDate: cardData.expiryDate,
+        cvv: cardData.cvv,
+        cardHolderName: cardData.cardHolderName,
       });
       alert("Оплата прошла успешно!");
       setPurchase(null);
-      setSelectedSeats([]);
-      setCardNumber("");
-      setExpiryDate("");
-      setCvv("");
-      setCardHolderName("");
       refetchTickets();
       refetchHall();
     } catch (err) {
@@ -194,45 +136,14 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
               <strong>Возраст:</strong> {movie.ageRating}
             </p>
 
-            <div className="mb-3">
-              <label className="text-light me-2">Выберите дату:</label>
-              <input
-                type="date"
-                className="form-control d-inline-block"
-                style={{ width: "200px" }}
-                value={selectedDate}
-                onChange={(e) => {
-                  setSelectedDate(e.target.value);
-                  setSelectedSession(null);
-                }}
-              />
-            </div>
-
-            <h5 className="mt-4 text-light">Доступные сеансы:</h5>
-            <div className="d-flex flex-wrap gap-2 mt-2">
-              {loadingSessions && <p>Загрузка сеансов...</p>}
-              {!loadingSessions && filteredSessions.length === 0 && (
-                <p>Сеансов нет</p>
-              )}
-              {!loadingSessions &&
-                filteredSessions.map((session) => {
-                  const time = new Date(session.startAt).toLocaleTimeString(
-                    [],
-                    { hour: "2-digit", minute: "2-digit" }
-                  );
-                  return (
-                    <button
-                      key={session.id}
-                      className={`btn btn-primary btn-lg ${
-                        selectedSession?.id === session.id ? "active" : ""
-                      }`}
-                      onClick={() => setSelectedSession(session)}
-                    >
-                      {time} — Зал
-                    </button>
-                  );
-                })}
-            </div>
+            <SessionSelector
+              sessions={sessions}
+              loadingSessions={loadingSessions}
+              onSessionChange={(session) => {
+                setSelectedSession(session);
+                setSelectedSeats([]);
+              }}
+            />
 
             {selectedSession && (
               <div className="mt-4">
@@ -243,199 +154,41 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                     className="d-flex flex-column align-items-center mb-4"
                     style={{ gap: "10px" }}
                   >
-                    <div className="d-flex flex-wrap justify-content-center gap-4 mb-3">
-                      {hall.plan.categories.map((c) => (
-                        <div
-                          key={c.id}
-                          className="d-flex align-items-center gap-1"
-                        >
-                          <span
-                            className="btn"
-                            style={{
-                              width: "20px",
-                              height: "20px",
-                              padding: 0,
-                              backgroundColor: c.name
-                                .toLowerCase()
-                                .includes("vip")
-                                ? "#0d6efd"
-                                : "#fff",
-                              border: c.name.toLowerCase().includes("vip")
-                                ? "1px solid #0d6efd"
-                                : "1px solid #fff",
-                            }}
-                          ></span>
-                          <small className="text-light">
-                            {c.name} — {c.priceCents} ₽
-                          </small>
-                        </div>
-                      ))}
+                    <SeatLegend categories={hall.plan.categories} />
 
-                      <div className="d-flex align-items-center gap-1">
-                        <span
-                          className="btn btn-outline-light"
-                          style={{ width: "20px", height: "20px", padding: 0 }}
-                        ></span>
-                        <small>Свободно</small>
-                      </div>
-                      <div className="d-flex align-items-center gap-1">
-                        <span
-                          className="btn btn-warning"
-                          style={{ width: "20px", height: "20px", padding: 0 }}
-                        ></span>
-                        <small>Забронировано</small>
-                      </div>
-                      <div className="d-flex align-items-center gap-1">
-                        <span
-                          className="btn btn-danger"
-                          style={{ width: "20px", height: "20px", padding: 0 }}
-                        ></span>
-                        <small>Продано</small>
-                      </div>
-                    </div>
-
-                    {Array.from(new Set(hall.plan.seats.map((s) => s.row)))
-                      .sort((a, b) => a - b)
-                      .map((rowNum) => {
-                        const rowSeats = hall.plan.seats
-                          .filter((s) => s.row === rowNum)
-                          .sort((a, b) => a.number - b.number);
-
-                        return (
-                          <div
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns: `repeat(${rowSeats.length}, 50px)`,
-                              gap: "5px",
-                            }}
-                          >
-                            {rowSeats.map((seat) => {
-                              const status = getSeatStatus(seat.id);
-                              const category = getCategory(seat.categoryId);
-                              const isSelected = selectedSeats.includes(
-                                seat.id
-                              );
-
-                              let color = "btn-outline-light";
-                              if (status === "SOLD") color = "btn-danger";
-                              else if (status === "RESERVED")
-                                color = "btn-warning";
-                              else if (isSelected) color = "btn-success";
-
-                              return (
-                                <button
-                                  key={seat.id}
-                                  className={`btn ${color}`}
-                                  style={{ width: "50px", height: "50px" }}
-                                  disabled={status !== "AVAILABLE"}
-                                  onClick={() => handleSeatClick(seat.id)}
-                                  title={`${category?.name || "Место"} — ${
-                                    category ? category.priceCents : 0
-                                  } ₽`}
-                                >
-                                  {seat.number}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        );
-                      })}
+                    <SeatGrid
+                      seats={hall.plan.seats}
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      tickets={tickets as any}
+                      categories={hall.plan.categories}
+                      onSelectedSeatsChange={(newSelectedSeats) => {
+                        setSelectedSeats(newSelectedSeats);
+                      }}
+                    />
                   </div>
                 )}
 
                 {selectedSeats.length > 0 && hall && !purchase && (
-                  <div className="text-center mb-3">
-                    <p>
-                      <strong>Выбраны места:</strong>{" "}
-                      {selectedSeats
-                        .map((id) => {
-                          const ticket = tickets?.find((t) => t.seatId === id);
-                          if (!ticket || !hall) return "";
-                          const seat = hall.plan.seats.find((s) => s.id === id);
-                          if (!seat) return "";
-                          const cat = getCategory(ticket.categoryId);
-                          return `Ряд ${seat.row + 1}, №${seat.number} (${
-                            cat?.name
-                          } — ${cat ? cat.priceCents : 0} ₽)`;
-                        })
-                        .filter(Boolean)
-                        .join("; ")}{" "}
-                    </p>
-                    <p>
-                      <strong>Итого:</strong> {totalPrice} ₽
-                    </p>
-                    <button
-                      className="btn btn-primary px-5"
-                      onClick={handleReserve}
-                    >
-                      Забронировать
-                    </button>
-                  </div>
+                  <BookingInfo
+                    selectedSeats={selectedSeats}
+                    seats={hall.plan.seats}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    tickets={tickets as any}
+                    categories={hall.plan.categories}
+                    totalPrice={totalPrice}
+                    onReserve={handleReserve}
+                  />
                 )}
 
                 {purchase && hall && (
-                  <div className="text-center mt-4 p-3 border border-light rounded">
-                    <h5>Оплата</h5>
-                    <p>
-                      <strong>Места:</strong>{" "}
-                      {tickets
-                        ?.filter((t) => purchase.ticketIds.includes(t.id))
-                        .map((t) => {
-                          const cat = getCategory(t.categoryId);
-                          const seat = hall.plan.seats.find(
-                            (s) => s.id === t.seatId
-                          );
-                          return seat
-                            ? `Ряд ${seat.row + 1}, №${seat.number} (${
-                                cat?.name
-                              } — ${cat?.priceCents} ₽)`
-                            : "";
-                        })
-                        .join("; ")}{" "}
-                    </p>
-                    <p>
-                      <strong>Сумма:</strong>{" "}
-                      {tickets
-                        ?.filter((t) => purchase.ticketIds.includes(t.id))
-                        .reduce((sum, t) => {
-                          const cat = getCategory(t.categoryId);
-                          return sum + (cat ? cat.priceCents : 0);
-                        }, 0)}{" "}
-                      ₽
-                    </p>
-                    <div className="d-flex flex-column align-items-center gap-2">
-                      <input
-                        placeholder="Номер карты"
-                        className="form-control"
-                        value={cardNumber}
-                        onChange={(e) => setCardNumber(e.target.value)}
-                      />
-                      <input
-                        placeholder="Срок (MM/YY)"
-                        className="form-control"
-                        value={expiryDate}
-                        onChange={(e) => setExpiryDate(e.target.value)}
-                      />
-                      <input
-                        placeholder="CVV"
-                        className="form-control"
-                        value={cvv}
-                        onChange={(e) => setCvv(e.target.value)}
-                      />
-                      <input
-                        placeholder="Имя владельца карты"
-                        className="form-control"
-                        value={cardHolderName}
-                        onChange={(e) => setCardHolderName(e.target.value)}
-                      />
-                      <button
-                        className="btn btn-success px-5 mt-2"
-                        onClick={handlePayment}
-                      >
-                        Оплатить
-                      </button>
-                    </div>
-                  </div>
+                  <PaymentForm
+                    purchase={purchase}
+                    seats={hall.plan.seats}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    tickets={tickets as any}
+                    categories={hall.plan.categories}
+                    onPayment={handlePayment}
+                  />
                 )}
               </div>
             )}

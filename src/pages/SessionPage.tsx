@@ -2,31 +2,13 @@ import React, { useState } from "react";
 import { getSession } from "../api/session";
 import { getHall } from "../api/halls";
 import { useQuery } from "../hooks/query";
+import SeatRow from "../components/SeatRow";
+import BookingSummary from "../components/BookingSummary";
+import Fallback from "../components/shared/Fallback";
 
 interface Props {
   sessionId: string;
   onBack: () => void;
-}
-
-export interface Seat {
-  id: string;
-  row: number;
-  number: number;
-  categoryId: string;
-  status: string;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  priceCents: number;
-}
-
-export interface HallPlan {
-  hallId: string;
-  rows: number;
-  seats: Seat[];
-  categories: Category[];
 }
 
 const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
@@ -48,30 +30,15 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
     );
   };
 
-  if (loading) {
-    return (
-      <div className="text-center text-light py-5">
-        <h3>Загрузка данных...</h3>
-      </div>
-    );
-  }
-
-  if (!plan) {
-    return (
-      <div className="text-center text-light py-5">
-        <h3>План зала не найден</h3>
-      </div>
-    );
-  }
-
-  const rows = Array.from(new Set(plan.seats.map((s) => s.row))).sort(
+  const rows = Array.from(new Set(plan?.seats.map((s) => s.row))).sort(
     (a, b) => a - b
   );
+
   const getCategory = (catId: string) =>
-    plan.categories.find((c) => c.id === catId);
+    plan?.categories.find((c) => c.id === catId);
 
   const totalPrice = selectedSeats.reduce((sum, id) => {
-    const seat = plan.seats.find((s) => s.id === id);
+    const seat = plan?.seats.find((s) => s.id === id);
     if (!seat) return sum;
     const cat = getCategory(seat.categoryId);
     return sum + (cat ? cat.priceCents / 100 : 0);
@@ -83,76 +50,43 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
         <button className="btn btn-outline-light mb-4" onClick={onBack}>
           ← Назад
         </button>
-
-        <h2 className="text-center text-primary mb-4">
-          Схема зала — Зал {plan.hallId}
-        </h2>
-
-        <div
-          className="d-flex flex-column align-items-center mb-4"
-          style={{ gap: "10px" }}
+        <Fallback
+          loading={loading}
+          loader={
+            <div className="text-center text-light py-5">
+              <h3>Загрузка данных...</h3>
+            </div>
+          }
         >
-          {rows.map((rowNum) => {
-            const rowSeats = plan.seats
-              .filter((s) => s.row === rowNum)
-              .sort((a, b) => a.number - b.number);
-
-            return (
-              <div
-                key={rowNum}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: `repeat(${rowSeats.length}, 50px)`,
-                  gap: "5px",
-                }}
-              >
-                {rowSeats.map((seat) => {
-                  const category = getCategory(seat.categoryId);
-                  const isSelected = selectedSeats.includes(seat.id);
-                  const isTaken = seat.status !== "AVAILABLE";
-
-                  const color = isTaken
-                    ? "btn-secondary"
-                    : isSelected
-                      ? "btn-success"
-                      : category?.name?.toLowerCase().includes("vip")
-                        ? "btn-primary"
-                        : "btn-outline-light";
-
-                  return (
-                    <button
-                      key={seat.id}
-                      className={`btn ${color}`}
-                      style={{ width: "50px", height: "50px" }}
-                      disabled={isTaken}
-                      onClick={() => handleSeatClick(seat.id)}
-                      title={`${category?.name || "Место"} — ${
-                        category ? category.priceCents / 100 : 0
-                      } ₽`}
-                    >
-                      {seat.number}
-                    </button>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="text-center mb-3">
-          <p>
-            <strong>Выбрано мест:</strong> {selectedSeats.length}
-          </p>
-          <p>
-            <strong>Итого:</strong> {totalPrice} ₽
-          </p>
-          <button
-            className="btn btn-primary px-5"
-            disabled={selectedSeats.length === 0}
-          >
-            Забронировать
-          </button>
-        </div>
+          <>
+            {" "}
+            <h2 className="text-center text-primary mb-4">
+              Схема зала — Зал {plan!.hallId}
+            </h2>
+            <div
+              className="d-flex flex-column align-items-center mb-4"
+              style={{ gap: "10px" }}
+            >
+              {rows.map((rowNum) => (
+                <SeatRow
+                  key={rowNum}
+                  rowNum={rowNum}
+                  seats={plan!.seats}
+                  selectedSeats={selectedSeats}
+                  categories={plan!.categories}
+                  onSeatClick={handleSeatClick}
+                />
+              ))}
+            </div>
+            <BookingSummary
+              selectedSeatsCount={selectedSeats.length}
+              totalPrice={totalPrice}
+              onBook={() => {
+                // Логика бронирования
+              }}
+            />
+          </>
+        </Fallback>
       </div>
     </div>
   );
