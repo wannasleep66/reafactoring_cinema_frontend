@@ -1,4 +1,5 @@
 import React from "react";
+import { CONFIG } from "../constants/config";
 
 export interface Seat {
   id: string;
@@ -74,8 +75,8 @@ const SeatGrid: React.FC<SeatGridProps> = ({
             key={rowNum}
             style={{
               display: "grid",
-              gridTemplateColumns: `repeat(${rowSeats.length}, 50px)`,
-              gap: "5px",
+              gridTemplateColumns: `repeat(${rowSeats.length}, ${CONFIG.UI.SEAT_BUTTON_SIZE})`,
+              gap: CONFIG.UI.SEAT_BUTTON_GAP,
             }}
           >
             {rowSeats.map((seat) => {
@@ -92,7 +93,10 @@ const SeatGrid: React.FC<SeatGridProps> = ({
                 <button
                   key={seat.id}
                   className={`btn ${color}`}
-                  style={{ width: "50px", height: "50px" }}
+                  style={{
+                    width: CONFIG.UI.SEAT_BUTTON_SIZE,
+                    height: CONFIG.UI.SEAT_BUTTON_SIZE,
+                  }}
                   disabled={status !== "AVAILABLE"}
                   onClick={() => handleSeatClick(seat.id)}
                   title={`${category?.name || "Место"} — ${

@@ -7,6 +7,7 @@ import PurchaseCard, {
 } from "../components/PurchaseCard";
 import Fallback from "../components/shared/Fallback";
 import { useQuery } from "../hooks/query";
+import { CONFIG } from "../constants/config";
 
 export default function UserProfilePage() {
   const {
@@ -15,7 +16,10 @@ export default function UserProfilePage() {
     refetch: refetchPurchases,
   } = useQuery({
     queryFn: async () => {
-      const { data: purchases } = await getPurchases({ page: 0, size: 5 });
+      const { data: purchases } = await getPurchases({
+        page: CONFIG.PAGINATION.DEFAULT_PAGE,
+        size: CONFIG.PAGINATION.PURCHASE_PAGE_SIZE,
+      });
       const filmsIdsToLoad = new Set(purchases.map((p) => p.filmId));
       const films = await Promise.all(
         Array.from(filmsIdsToLoad).map((id) => getFilm(id))

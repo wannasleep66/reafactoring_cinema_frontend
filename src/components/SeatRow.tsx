@@ -1,5 +1,6 @@
 import React from "react";
 import type { Seat } from "../api/halls";
+import { CONFIG } from "../constants/config";
 
 interface Category {
   id: string;
@@ -32,8 +33,8 @@ const SeatRow: React.FC<SeatRowProps> = ({
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: `repeat(${rowSeats.length}, 50px)`,
-        gap: "5px",
+        gridTemplateColumns: `repeat(${rowSeats.length}, ${CONFIG.UI.SEAT_BUTTON_SIZE})`,
+        gap: CONFIG.UI.SEAT_BUTTON_GAP,
       }}
     >
       {rowSeats.map((seat) => {
@@ -53,7 +54,10 @@ const SeatRow: React.FC<SeatRowProps> = ({
           <button
             key={seat.id}
             className={`btn ${color}`}
-            style={{ width: "50px", height: "50px" }}
+            style={{
+              width: CONFIG.UI.SEAT_BUTTON_SIZE,
+              height: CONFIG.UI.SEAT_BUTTON_SIZE,
+            }}
             disabled={isTaken}
             onClick={() => onSeatClick(seat.id)}
             title={`${category?.name || "Место"} — ${

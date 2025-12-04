@@ -1,5 +1,6 @@
 import React from "react";
 import type { Film } from "../api/movie";
+import { CONFIG } from "../constants/config";
 
 interface Props {
   movie: Film;
@@ -9,7 +10,7 @@ interface Props {
 const MovieCard: React.FC<Props> = ({ movie, onSelect }) => (
   <div
     className="card"
-    style={{ width: "18rem", cursor: "pointer" }}
+    style={{ width: CONFIG.UI.MOVIE_CARD_WIDTH, cursor: "pointer" }}
     onClick={onSelect}
   >
     <img

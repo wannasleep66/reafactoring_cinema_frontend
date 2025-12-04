@@ -11,6 +11,7 @@ import { useQuery } from "../hooks/query";
 import SessionCreateForm from "../components/SessionCreateForm";
 import SessionEditForm from "../components/SessionEditForm";
 import SessionsList from "../components/SessionsList";
+import { CONFIG } from "../constants/config";
 
 type SessionFormSchema = {
   id?: string;
@@ -31,7 +32,11 @@ export default function SessionsManagement() {
     queryFn: () => getHalls().then((res) => res.data),
   });
   const { data: sessions, refetch: refetchSessions } = useQuery({
-    queryFn: () => getSesssions({ page: 0, size: 50 }).then((res) => res.data),
+    queryFn: () =>
+      getSesssions({
+        page: CONFIG.PAGINATION.DEFAULT_PAGE,
+        size: CONFIG.PAGINATION.SESSIONS_PAGE_SIZE,
+      }).then((res) => res.data),
   });
   const [editing, setEditing] = useState<SessionFormSchema | null>(null);
   const [isCreating, setIsCreating] = useState(false);

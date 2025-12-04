@@ -7,6 +7,7 @@ import {
   type FilmAgeRating,
 } from "../api/movie";
 import { useQuery } from "../hooks/query";
+import { CONFIG } from "../constants/config";
 
 type MovieFormSchema = {
   id?: string;
@@ -18,7 +19,11 @@ type MovieFormSchema = {
 
 export default function MoviesManagement() {
   const { data: movies, refetch } = useQuery({
-    queryFn: () => getFilms({ page: 0, size: 100 }).then((res) => res.data),
+    queryFn: () =>
+      getFilms({
+        page: CONFIG.PAGINATION.DEFAULT_PAGE,
+        size: CONFIG.PAGINATION.MOVIES_PAGE_SIZE,
+      }).then((res) => res.data),
   });
 
   const [editing, setEditing] = useState<MovieFormSchema | null>(null);
