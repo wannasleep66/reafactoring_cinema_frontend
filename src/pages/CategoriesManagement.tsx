@@ -1,11 +1,9 @@
 import { useState } from "react";
 import {
-  createCategory,
-  deleteCategory,
   getCategories,
-  updateCategory,
 } from "../api/categories";
 import { useQuery } from "../hooks/query";
+import { useCreateCategoryMutation, useUpdateCategoryMutation, useDeleteCategoryMutation } from "../hooks/useCategoryMutations";
 import CategoryCreateForm from "./CategoryCreateForm";
 import CategoryEditForm from "./CategoryEditForm";
 import CategoriesList from "./CategoriesList";
@@ -26,6 +24,10 @@ export default function CategoriesManagement() {
       }).then((res) => res.data),
   });
 
+  const { mutate: createCategory } = useCreateCategoryMutation();
+  const { mutate: updateCategory } = useUpdateCategoryMutation();
+  const { mutate: deleteCategory } = useDeleteCategoryMutation();
+
   const [editing, setEditing] = useState<CategoryFormSchema | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -35,7 +37,7 @@ export default function CategoriesManagement() {
 
     try {
       if (cat.id) {
-        await updateCategory(cat.id, cat);
+        await updateCategory({ id: cat.id, data: cat });
       } else {
         await createCategory(cat);
       }
@@ -53,7 +55,7 @@ export default function CategoriesManagement() {
     if (!window.confirm("Удалить эту категорию?")) return;
 
     try {
-      await deleteCategory(id);
+      await deleteCategory({ id });
       refetchCategories();
     } catch (err) {
       console.error(err);
