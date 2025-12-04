@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "../hooks/query";
 import { useUpdateProfileMutation } from "../hooks/useUpdateProfileMutation";
+import { useForm } from "../hooks/useForm";
 import Fallback from "./shared/Fallback";
 import { getCurrentUser, type User } from "../api/user";
 
@@ -13,45 +14,33 @@ const EditProfileForm: React.FC = () => {
     queryFn: getCurrentUser,
   });
 
-  const { mutate: updateProfile, loading: isUpdating } = useUpdateProfileMutation();
+  const { mutate: updateProfile, loading: isUpdating } =
+    useUpdateProfileMutation();
+
+  const { form, registerField, resetForm, handleSubmit } = useForm<
+    Partial<User>
+  >({
+    firstName: "",
+    lastName: "",
+    email: "",
+    gender: "" as User["gender"],
+    age: 0,
+  });
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
-  const [form, setForm] = useState<{ data?: Partial<User>; loading: boolean }>({
-    data: profile,
-    loading: false,
-  });
-
   useEffect(() => {
-    setForm({ data: profile, loading: false });
-  }, [profile]);
+    if (profile) {
+      resetForm(profile);
+    }
+  }, [profile, resetForm]);
 
   const handleEdit = async () => {
-    setForm((prevForm) => ({ ...prevForm, loading: true }));
-    try {
-      await updateProfile(form.data!);
+    await handleSubmit(async (data) => {
+      await updateProfile(data);
       setIsEditing(false);
       refetchProfile();
-    } catch (error) {
-      console.error('Error updating profile:', error);
-    } finally {
-      setForm((prevForm) => ({ ...prevForm, loading: false }));
-    }
-  };
-
-  const registerField = (name: keyof User) => {
-    return {
-      value: form.data ? form.data[name] : "",
-      onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-        setForm((prevForm) => ({
-          ...prevForm,
-          data: {
-            ...prevForm.data,
-            [name]: e.target.value,
-          },
-        }));
-      },
-    };
+    });
   };
 
   return (
@@ -83,7 +72,7 @@ const EditProfileForm: React.FC = () => {
                   onClick={handleEdit}
                   disabled={form.loading}
                 >
-                  {form.loading ? 'Сохранение...' : 'Сохранить'}
+                  {form.loading ? "Сохранение..." : "Сохранить"}
                 </button>
                 <button
                   className="btn btn-secondary"

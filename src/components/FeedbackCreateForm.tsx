@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { createReview } from "../api/reviews";
+import { useForm } from "../hooks/useForm";
 import { CONFIG } from "../constants/config";
 
 type FeedbackCreateFormProps = {
@@ -11,27 +11,18 @@ const FeedbackCreateForm: React.FC<FeedbackCreateFormProps> = ({
   filmId,
   onCreate,
 }) => {
-  const [form, setForm] = useState<{
-    data: { rating: number; text: string };
-    loading: boolean;
-  }>({ data: { rating: CONFIG.REVIEW.MIN_RATING, text: "" }, loading: false });
+  type FormData = { rating: number; text: string };
 
-  const registerField = (name: keyof typeof form.data) => {
-    return {
-      value: form.data[name] ?? "",
-      onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-        setForm((prev) => ({
-          ...prev,
-          data: { ...prev.data, [name]: e.target.value },
-        })),
-    };
-  };
+  const { form, registerField, handleSubmit } = useForm<FormData>({
+    rating: CONFIG.REVIEW.MIN_RATING,
+    text: "",
+  });
 
   const handleCreate = async () => {
-    setForm((prev) => ({ ...prev, loading: true }));
-    await createReview(filmId, form.data);
-    setForm((prev) => ({ ...prev, loading: false }));
-    onCreate();
+    await handleSubmit(async (data) => {
+      await createReview(filmId, data);
+      onCreate();
+    });
   };
 
   return (
@@ -43,7 +34,9 @@ const FeedbackCreateForm: React.FC<FeedbackCreateFormProps> = ({
         max={CONFIG.REVIEW.MAX_RATING}
         className="form-control mb-1"
         placeholder={`Рейтинг ${CONFIG.REVIEW.MIN_RATING}–${CONFIG.REVIEW.MAX_RATING}`}
-        {...registerField("rating")}
+        {...registerField("rating", {
+          transformer: (value) => parseInt(value) || CONFIG.REVIEW.MIN_RATING,
+        })}
       />
       <input
         type="text"
