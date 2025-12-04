@@ -8,9 +8,9 @@ import {
   deleteSession,
 } from "../api/session";
 import { useQuery } from "../hooks/query";
-import SessionCreateForm from "./SessionCreateForm";
-import SessionEditForm from "./SessionEditForm";
-import SessionsList from "./SessionsList";
+import SessionCreateForm from "../components/SessionCreateForm";
+import SessionEditForm from "../components/SessionEditForm";
+import SessionsList from "../components/SessionsList";
 
 type SessionFormSchema = {
   id?: string;
