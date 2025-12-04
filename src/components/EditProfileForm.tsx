@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "../hooks/query";
+import { useUpdateProfileMutation } from "../hooks/useUpdateProfileMutation";
 import Fallback from "./shared/Fallback";
-import { getCurrentUser, updateCurrentUser, type User } from "../api/user";
+import { getCurrentUser, type User } from "../api/user";
 
 const EditProfileForm: React.FC = () => {
   const {
@@ -11,6 +12,8 @@ const EditProfileForm: React.FC = () => {
   } = useQuery({
     queryFn: getCurrentUser,
   });
+
+  const { mutate: updateProfile, loading: isUpdating } = useUpdateProfileMutation();
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
@@ -24,11 +27,16 @@ const EditProfileForm: React.FC = () => {
   }, [profile]);
 
   const handleEdit = async () => {
-    setIsEditing(false);
-    await updateCurrentUser(form.data!);
-    setForm((prevForm) => ({ ...prevForm, loading: false }));
-    setIsEditing(false);
-    refetchProfile();
+    setForm((prevForm) => ({ ...prevForm, loading: true }));
+    try {
+      await updateProfile(form.data!);
+      setIsEditing(false);
+      refetchProfile();
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    } finally {
+      setForm((prevForm) => ({ ...prevForm, loading: false }));
+    }
   };
 
   const registerField = (name: keyof User) => {
@@ -70,12 +78,17 @@ const EditProfileForm: React.FC = () => {
               </>
             ) : (
               <>
-                <button className="btn btn-success me-2" onClick={handleEdit}>
-                  Сохранить
+                <button
+                  className="btn btn-success me-2"
+                  onClick={handleEdit}
+                  disabled={form.loading}
+                >
+                  {form.loading ? 'Сохранение...' : 'Сохранить'}
                 </button>
                 <button
                   className="btn btn-secondary"
                   onClick={() => setIsEditing(false)}
+                  disabled={form.loading}
                 >
                   Отмена
                 </button>

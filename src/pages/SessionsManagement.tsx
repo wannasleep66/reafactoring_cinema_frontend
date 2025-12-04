@@ -3,11 +3,9 @@ import { getFilms } from "../api/movie";
 import { getHalls } from "../api/halls";
 import {
   getSesssions,
-  createSession,
-  updateSession,
-  deleteSession,
 } from "../api/session";
 import { useQuery } from "../hooks/query";
+import { useCreateSessionMutation, useUpdateSessionMutation, useDeleteSessionMutation } from "../hooks/useSessionMutations";
 import SessionCreateForm from "../components/SessionCreateForm";
 import SessionEditForm from "../components/SessionEditForm";
 import SessionsList from "../components/SessionsList";
@@ -38,13 +36,18 @@ export default function SessionsManagement() {
         size: CONFIG.PAGINATION.SESSIONS_PAGE_SIZE,
       }).then((res) => res.data),
   });
+
+  const { mutate: createSession } = useCreateSessionMutation();
+  const { mutate: updateSession } = useUpdateSessionMutation();
+  const { mutate: deleteSession } = useDeleteSessionMutation();
+
   const [editing, setEditing] = useState<SessionFormSchema | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
   const handleSave = async (session: SessionFormSchema) => {
     try {
       if (session.id) {
-        await updateSession(session.id, session);
+        await updateSession({ id: session.id, data: session });
       } else {
         await createSession(session);
       }
@@ -60,7 +63,7 @@ export default function SessionsManagement() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Удалить этот сеанс?")) return;
     try {
-      await deleteSession(id);
+      await deleteSession({ id });
       await refetchSessions();
     } catch (err) {
       console.error(err);

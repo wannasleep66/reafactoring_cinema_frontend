@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import {
-  createFilm,
-  deleteFilm,
   getFilms,
-  updateFilm,
   type FilmAgeRating,
 } from "../api/movie";
 import { useQuery } from "../hooks/query";
+import { useCreateMovieMutation, useUpdateMovieMutation, useDeleteMovieMutation } from "../hooks/useMovieMutations";
 import { CONFIG } from "../constants/config";
 
 type MovieFormSchema = {
@@ -26,14 +24,18 @@ export default function MoviesManagement() {
       }).then((res) => res.data),
   });
 
+  const { mutate: createMovie } = useCreateMovieMutation();
+  const { mutate: updateMovie } = useUpdateMovieMutation();
+  const { mutate: deleteMovie } = useDeleteMovieMutation();
+
   const [editing, setEditing] = useState<MovieFormSchema | null>(null);
 
   const handleSave = async (movie: MovieFormSchema) => {
     try {
       if (movie.id) {
-        await updateFilm(movie.id, movie);
+        await updateMovie({ id: movie.id, data: movie });
       } else {
-        const data = await createFilm(movie);
+        const data = await createMovie(movie);
         movie.id = data.id;
       }
       refetch();
@@ -46,7 +48,7 @@ export default function MoviesManagement() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Удалить этот фильм?")) return;
     try {
-      await deleteFilm(id);
+      await deleteMovie({ id });
       refetch();
     } catch (err) {
       console.error("Ошибка удаления фильма:", err);
