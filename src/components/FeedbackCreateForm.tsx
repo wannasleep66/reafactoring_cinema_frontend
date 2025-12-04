@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createReview } from "../api/reviews";
+import { CONFIG } from "../constants/config";
 
 type FeedbackCreateFormProps = {
   filmId: string;
@@ -13,7 +14,7 @@ const FeedbackCreateForm: React.FC<FeedbackCreateFormProps> = ({
   const [form, setForm] = useState<{
     data: { rating: number; text: string };
     loading: boolean;
-  }>({ data: { rating: 0, text: "" }, loading: false });
+  }>({ data: { rating: CONFIG.REVIEW.MIN_RATING, text: "" }, loading: false });
 
   const registerField = (name: keyof typeof form.data) => {
     return {
@@ -38,10 +39,10 @@ const FeedbackCreateForm: React.FC<FeedbackCreateFormProps> = ({
       <h6>Оставить отзыв:</h6>
       <input
         type="number"
-        min={0}
-        max={5}
+        min={CONFIG.REVIEW.MIN_RATING}
+        max={CONFIG.REVIEW.MAX_RATING}
         className="form-control mb-1"
-        placeholder="Рейтинг 0–5"
+        placeholder={`Рейтинг ${CONFIG.REVIEW.MIN_RATING}–${CONFIG.REVIEW.MAX_RATING}`}
         {...registerField("rating")}
       />
       <input

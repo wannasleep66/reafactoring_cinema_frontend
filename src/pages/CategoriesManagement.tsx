@@ -9,6 +9,7 @@ import { useQuery } from "../hooks/query";
 import CategoryCreateForm from "./CategoryCreateForm";
 import CategoryEditForm from "./CategoryEditForm";
 import CategoriesList from "./CategoriesList";
+import { CONFIG } from "../constants/config";
 
 type CategoryFormSchema = {
   id?: string;
@@ -18,7 +19,11 @@ type CategoryFormSchema = {
 
 export default function CategoriesManagement() {
   const { data: categories, refetch: refetchCategories } = useQuery({
-    queryFn: () => getCategories({ page: 0, size: 20 }).then((res) => res.data),
+    queryFn: () =>
+      getCategories({
+        page: CONFIG.PAGINATION.DEFAULT_PAGE,
+        size: CONFIG.PAGINATION.CATEGORIES_PAGE_SIZE,
+      }).then((res) => res.data),
   });
 
   const [editing, setEditing] = useState<CategoryFormSchema | null>(null);
