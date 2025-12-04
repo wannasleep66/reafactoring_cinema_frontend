@@ -12,25 +12,16 @@ export interface User {
   updatedAt: string;
 }
 
-export async function getCurrentUser(token: string): Promise<User> {
-  const { data } = await api.get<User>("/users/me", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export async function getCurrentUser(): Promise<User> {
+  const { data } = await api.get<User>("/users/me");
   return data;
 }
 
 export async function updateCurrentUser(
-  token: string,
   input: Partial<
     Pick<User, "firstName" | "lastName" | "email" | "age" | "gender">
-  >,
+  >
 ): Promise<User> {
-  const { data } = await api.put<User>("/users/me", input, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const { data } = await api.put<User>("/users/me", input);
   return data;
 }

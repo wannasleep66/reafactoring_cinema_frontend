@@ -22,32 +22,24 @@ export type SeatCategoryListResponse = {
   pagination: Pagination;
 };
 
-export async function getCategories(token: string, params?: PaginationQuery) {
+export async function getCategories(params?: PaginationQuery) {
   const { data } = await api.get<SeatCategoryListResponse>("/seat-categories", {
     params: params,
-    headers: { Authorization: `Bearer ${token}` },
   });
   return data;
 }
 
-export async function createCategory(token: string, input: SeatCategoryCreate) {
-  await api.post("/seat-categories", input, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function createCategory(input: SeatCategoryCreate) {
+  await api.post("/seat-categories", input);
 }
 
 export async function updateCategory(
-  token: string,
   id: SeatCategory["id"],
-  input: SeatCategoryUpdate,
+  input: SeatCategoryUpdate
 ) {
-  await api.put(`/seat-categories/${id}`, input, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  await api.put(`/seat-categories/${id}`, input);
 }
 
-export async function deleteCategory(token: string, id: SeatCategory["id"]) {
-  await api.delete(`/seat-categories/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function deleteCategory(id: SeatCategory["id"]) {
+  await api.delete(`/seat-categories/${id}`);
 }

@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from "react";
-import * as userApi from "./api/user";
-import { getPurchases } from "./api/purchases";
-import { getFilm } from "./api/movie";
-import { createReview } from "./api/reviews";
-
-interface Props {
-  token: string;
-}
+import { getCurrentUser, updateCurrentUser } from "../api/user";
+import { getPurchases } from "../api/purchases";
+import { getFilm } from "../api/movie";
+import { createReview } from "../api/reviews";
+import { useQuery } from "../hooks/query";
 
 interface PurchaseResponse {
   id: string;
@@ -24,47 +21,41 @@ interface ReviewForm {
   text: string;
 }
 
-export default function UserProfilePage({ token }: Props) {
-  const [user, setUser] = useState<userApi.User | null>(null);
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    gender: "FEMALE",
-    age: 21,
+export default function UserProfilePage() {
+  const { data: user, refetch: refetchUser } = useQuery({
+    queryFn: getCurrentUser,
   });
+
+  const [form, setForm] = useState({
+    firstName: user?.firstName,
+    lastName: user?.lastName,
+    email: user?.email,
+    gender: { FEMALE: "Женский", MALE: "Мужской" }[user?.gender ?? "MALE"],
+    age: user?.age,
+  });
+
   const [editing, setEditing] = useState(false);
 
   const [purchases, setPurchases] = useState<PurchaseResponse[]>([]);
   const [filmTitles, setFilmTitles] = useState<Record<string, string>>({});
   const [reviewForms, setReviewForms] = useState<Record<string, ReviewForm>>(
-    {},
+    {}
   );
 
   useEffect(() => {
-    async function fetchUser() {
-      try {
-        const currentUser = await userApi.getCurrentUser(token);
-        setUser(currentUser);
-        setForm({
-          firstName: currentUser.firstName,
-          lastName: currentUser.lastName,
-          email: currentUser.email,
-          gender: currentUser.gender === "FEMALE" ? "Женский" : "Мужской",
-          age: currentUser.age,
-        });
-      } catch (err) {
-        console.error("Ошибка загрузки профиля:", err);
-        alert("Ошибка загрузки профиля");
-      }
-    }
-    fetchUser();
-  }, [token]);
+    setForm({
+      firstName: user?.firstName,
+      lastName: user?.lastName,
+      email: user?.email,
+      gender: { FEMALE: "Женский", MALE: "Мужской" }[user?.gender ?? "MALE"],
+      age: user?.age,
+    });
+  }, [user]);
 
   useEffect(() => {
     async function fetchPurchases() {
       try {
-        const purchases = await getPurchases(token, { page: 0, size: 20 });
+        const purchases = await getPurchases({ page: 0, size: 20 });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mapped: PurchaseResponse[] = purchases.data.map((p: any) => ({
           id: p.id,
@@ -90,7 +81,7 @@ export default function UserProfilePage({ token }: Props) {
             } catch {
               filmData[id] = "Неизвестный фильм";
             }
-          }),
+          })
         );
 
         setFilmTitles(filmData);
@@ -100,10 +91,10 @@ export default function UserProfilePage({ token }: Props) {
     }
 
     fetchPurchases();
-  }, [token]);
+  }, []);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: name === "age" ? Number(value) : value });
@@ -112,14 +103,14 @@ export default function UserProfilePage({ token }: Props) {
   const handleSaveProfile = async () => {
     if (!user) return;
     try {
-      const updated = await userApi.updateCurrentUser(token, {
+      await updateCurrentUser({
         firstName: form.firstName,
         lastName: form.lastName,
         email: form.email,
         age: form.age,
         gender: form.gender === "Женский" ? "FEMALE" : "MALE",
       });
-      setUser(updated);
+      refetchUser();
       setEditing(false);
       alert("Профиль обновлен!");
     } catch (err) {
@@ -131,7 +122,7 @@ export default function UserProfilePage({ token }: Props) {
   const handleReviewChange = (
     filmId: string,
     field: "rating" | "text",
-    value: string | number,
+    value: string | number
   ) => {
     setReviewForms((prev) => ({
       ...prev,
@@ -145,7 +136,7 @@ export default function UserProfilePage({ token }: Props) {
       return alert("Заполните рейтинг и текст отзыва");
 
     try {
-      await createReview(token, filmId, {
+      await createReview(filmId, {
         rating: review.rating,
         text: review.text,
       });
@@ -269,7 +260,7 @@ export default function UserProfilePage({ token }: Props) {
                       handleReviewChange(
                         p.filmId,
                         "rating",
-                        Number(e.target.value),
+                        Number(e.target.value)
                       )
                     }
                   />

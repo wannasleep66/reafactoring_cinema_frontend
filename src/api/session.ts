@@ -38,13 +38,9 @@ export type GetSessionsQueryParams = PaginationQuery & {
   date?: string;
 };
 
-export async function getSesssions(
-  token: string,
-  params?: GetSessionsQueryParams,
-) {
+export async function getSesssions(params?: GetSessionsQueryParams) {
   const { data } = await api.get<SessionListResponse>("/sessions", {
     params: params,
-    headers: { Authorization: `Bearer ${token}` },
   });
 
   return data;
@@ -55,27 +51,17 @@ export async function getSession(id: Session["id"]) {
   return res.data;
 }
 
-export async function createSession(token: string, input: SessionCreate) {
-  const { data } = await api.post<Session>("/sessions", input, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function createSession(input: SessionCreate) {
+  const { data } = await api.post<Session>("/sessions", input);
   return data;
 }
 
-export async function updateSession(
-  token: string,
-  id: Session["id"],
-  input: SessionUpdate,
-) {
-  const { data } = await api.put<Session>(`/sessions/${id}`, input, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function updateSession(id: Session["id"], input: SessionUpdate) {
+  const { data } = await api.put<Session>(`/sessions/${id}`, input);
   return data;
 }
 
-export async function deleteSession(token: string, id: Session["id"]) {
-  const { data } = await api.delete(`/sessions/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function deleteSession(id: Session["id"]) {
+  const { data } = await api.delete(`/sessions/${id}`);
   return data;
 }

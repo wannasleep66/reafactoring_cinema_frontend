@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import * as movieApi from "./api/movie";
-import ReviewsDisplay from "./ReviewsDisplay";
-import { getSesssions } from "./api/session";
-import { getHall } from "./api/halls";
-import { getTickets, reserveTicket } from "./api/tickets";
-import { createPurchase } from "./api/purchases";
-import { processPayment } from "./api/payment";
-import { useQuery } from "./hooks/query";
+import * as movieApi from "../api/movie";
+import ReviewsDisplay from "../components/ReviewsDisplay";
+import { getSesssions } from "../api/session";
+import { getHall } from "../api/halls";
+import { getTickets, reserveTicket } from "../api/tickets";
+import { createPurchase } from "../api/purchases";
+import { processPayment } from "../api/payment";
+import { useQuery } from "../hooks/query";
 
 interface Props {
   movie: movieApi.Film;
@@ -55,12 +55,9 @@ interface Purchase {
 }
 
 const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
-  const token = localStorage.getItem("token");
-
   const { data: sessions, loading: loadingSessions } = useQuery({
     queryFn: () => {
-      if (!token) return;
-      return getSesssions(token!, {
+      return getSesssions({
         page: 0,
         size: 100,
         filmId: movie.id,
@@ -85,7 +82,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
   });
 
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
+    new Date().toISOString().split("T")[0]
   );
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
@@ -104,7 +101,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
     setSelectedSeats((prev) =>
       prev.includes(seatId)
         ? prev.filter((id) => id !== seatId)
-        : [...prev, seatId],
+        : [...prev, seatId]
     );
   };
 
@@ -126,13 +123,11 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
   }, 0);
 
   const handleReserve = async () => {
-    if (!token) return alert("Сначала авторизуйтесь");
-
     try {
       for (const seatId of selectedSeats) {
         const ticket = tickets?.find((t) => t.seatId === seatId);
         if (!ticket) continue;
-        await reserveTicket(token, ticket.id);
+        await reserveTicket(ticket.id);
       }
       alert("Места успешно забронированы!");
 
@@ -141,7 +136,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
           ?.filter((t) => selectedSeats.includes(t.seatId))
           .map((t) => t.id) || [];
 
-      const purchases = await createPurchase(token, {
+      const purchases = await createPurchase({
         ticketIds: reservedTickets,
       });
       setPurchase(purchases);
@@ -152,11 +147,9 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
   };
 
   const handlePayment = async () => {
-    if (!token || !purchase) return alert("Ошибка оплаты");
-
     try {
-      await processPayment(token, {
-        purchaseId: purchase.id,
+      await processPayment({
+        purchaseId: purchase!.id,
         cardNumber,
         expiryDate,
         cvv,
@@ -225,7 +218,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                 filteredSessions.map((session) => {
                   const time = new Date(session.startAt).toLocaleTimeString(
                     [],
-                    { hour: "2-digit", minute: "2-digit" },
+                    { hour: "2-digit", minute: "2-digit" }
                   );
                   return (
                     <button
@@ -320,7 +313,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                               const status = getSeatStatus(seat.id);
                               const category = getCategory(seat.categoryId);
                               const isSelected = selectedSeats.includes(
-                                seat.id,
+                                seat.id
                               );
 
                               let color = "btn-outline-light";
@@ -390,7 +383,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                         .map((t) => {
                           const cat = getCategory(t.categoryId);
                           const seat = hall.plan.seats.find(
-                            (s) => s.id === t.seatId,
+                            (s) => s.id === t.seatId
                           );
                           return seat
                             ? `Ряд ${seat.row + 1}, №${seat.number} (${

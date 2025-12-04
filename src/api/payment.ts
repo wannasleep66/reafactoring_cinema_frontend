@@ -16,19 +16,14 @@ export type PaymentResponse = {
   message: string;
 };
 
-export async function processPayment(token: string, input: PaymentRequest) {
-  const { data } = await api.post<PaymentResponse>("/payments", input, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function processPayment(input: PaymentRequest) {
+  const { data } = await api.post<PaymentResponse>("/payments", input);
   return data;
 }
 
-export async function getPaymentStatus(token: string, paymentId: string) {
+export async function getPaymentStatus(paymentId: string) {
   const { data } = await api.get<Omit<PaymentResponse, "message">>(
-    `/payments/${paymentId}`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
+    `/payments/${paymentId}`
   );
   return data;
 }

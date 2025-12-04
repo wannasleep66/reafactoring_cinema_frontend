@@ -12,19 +12,14 @@ import {
 import type { SeatCategory } from "../api/categories";
 import { useQuery } from "../hooks/query";
 
-interface HallsManagementProps {
-  token: string;
-}
-
-export default function HallsManagement({ token }: HallsManagementProps) {
+export default function HallsManagement() {
   const { data: halls, refetch: refetchHalls } = useQuery({
-    queryFn: () => getHalls(token).then((res) => res.data),
+    queryFn: () => getHalls().then((res) => res.data),
   });
 
   const [editing, setEditing] = useState<Hall | null>(null);
 
   const handleSave = async (hall: HallFormSchema) => {
-    if (!token) return;
     try {
       const seats: SeatCreate[] = [];
       hall.rows.forEach((row, i) => {
@@ -45,9 +40,9 @@ export default function HallsManagement({ token }: HallsManagementProps) {
       };
 
       if (hall.id) {
-        await updateHall(token, hall.id, safeHall);
+        await updateHall(hall.id, safeHall);
       } else {
-        await createHall(token, safeHall);
+        await createHall(safeHall);
       }
 
       refetchHalls();
@@ -59,9 +54,9 @@ export default function HallsManagement({ token }: HallsManagementProps) {
   };
 
   const handleDelete = async (id: Hall["id"]) => {
-    if (!token || !window.confirm("Удалить этот зал?")) return;
+    if (!window.confirm("Удалить этот зал?")) return;
     try {
-      await deleteHall(token, id);
+      await deleteHall(id);
       refetchHalls();
     } catch (err) {
       console.error(err);
@@ -79,7 +74,6 @@ export default function HallsManagement({ token }: HallsManagementProps) {
 
       {editing && (
         <HallForm
-          token={token}
           hallId={editing.id!}
           onSave={handleSave}
           onCancel={() => setEditing(null)}
@@ -130,7 +124,6 @@ interface HallFormSchema {
 }
 
 interface HallFormProps {
-  token: string;
   hallId: Hall["id"];
   onSave: (hall: HallFormSchema) => void;
   onCancel: () => void;
@@ -184,12 +177,12 @@ function HallForm({ hallId, onSave, onCancel }: HallFormProps) {
   const handleRowChange = (
     id: number,
     seatsCount: number,
-    categoryId: string,
+    categoryId: string
   ) => {
     setForm({
       ...form,
       rows: form.rows.map((r) =>
-        r.number === id ? { ...r, seatsCount, categoryId } : r,
+        r.number === id ? { ...r, seatsCount, categoryId } : r
       ),
     });
   };

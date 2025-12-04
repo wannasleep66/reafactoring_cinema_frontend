@@ -6,119 +6,49 @@ import {
   Navigate,
   useParams,
 } from "react-router-dom";
-import Header from "./Header";
-import HomePage from "./HomePage";
-import LoginPage from "./LoginPage";
-import RegisterPage from "./RegisterPage";
-import UserProfilePage from "./UserProfilePage";
+import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import UserProfilePage from "./pages/UserProfilePage";
 import AdminDashboard from "./AdminDashboard/AdminDashboard";
-import { getCurrentUser, logout } from "./api/auth";
 import * as movie from "./api/movie";
-import { jwtDecode } from "jwt-decode";
-
-interface TokenPayload {
-  sub: string;
-  role: "ADMIN" | "USER";
-  exp: number;
-  iat: number;
-}
+import { AdminRole, UserRole } from "./store/auth";
+import RootLayout from "./pages/layouts/RootLayout";
+import HasRole from "./components/guards/HasRole";
+import ProtectedLayout from "./pages/layouts/ProtectedLayout";
 
 export default function App() {
-  const [token, setToken] = useState<string | null>(null);
-  const [role, setRole] = useState<"ADMIN" | "USER" | null>(null);
-
-  useEffect(() => {
-    const current = getCurrentUser();
-
-    if (current?.accessToken) {
-      setToken(current.accessToken);
-      try {
-        const decoded = jwtDecode<TokenPayload>(current.accessToken);
-        setRole(decoded.role);
-      } catch (error) {
-        setRole(null);
-        console.error("Token decoding failed:", error);
-      }
-    }
-  }, []);
-
-  const handleLogout = () => {
-    logout();
-    setToken(null);
-    setRole(null);
-  };
-
-  const setAuthData = (authData: { accessToken: string }) => {
-    setToken(authData.accessToken);
-    try {
-      const decoded = jwtDecode<TokenPayload>(authData.accessToken);
-      setRole(decoded.role);
-    } catch {
-      setRole(null);
-    }
-  };
-
   return (
     <Router>
-      <div className="app-container min-vh-100 d-flex flex-column bg-dark text-light">
-        <Header token={token} onLogout={handleLogout} />
-        <div className="flex-grow-1">
-          <Routes>
-            <Route path="/" element={<Navigate to="/home" />} />
+      <Routes>
+        <Route element={<RootLayout />}>
+          <Route>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+          </Route>
+          <Route element={<ProtectedLayout />}>
             <Route
-              path="/login"
+              path="/admin"
               element={
-                token ? (
-                  role === "ADMIN" ? (
-                    <Navigate to="/admin" />
-                  ) : (
-                    <Navigate to="/profile" />
-                  )
-                ) : (
-                  <LoginPage onLogin={setAuthData} />
-                )
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                token ? (
-                  role === "ADMIN" ? (
-                    <Navigate to="/admin" /> // Ты уже с нами
-                  ) : (
-                    <Navigate to="/profile" />
-                  )
-                ) : (
-                  <RegisterPage onRegister={setAuthData} />
-                )
+                <HasRole role={AdminRole} redirect="/profile">
+                  <AdminDashboard />
+                </HasRole>
               }
             />
             <Route
               path="/profile"
               element={
-                token && role === "USER" ? (
-                  <UserProfilePage token={token} />
-                ) : (
-                  <Navigate to="/login" />
-                )
+                <HasRole role={UserRole} redirect="/admin">
+                  <UserProfilePage />
+                </HasRole>
               }
             />
-            <Route
-              path="/admin"
-              element={
-                token && role === "ADMIN" ? (
-                  <AdminDashboard onBack={handleLogout} />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
-            />
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/films/:id" element={<MovieDetailsWrapper />} />
-            <Route path="*" element={<Navigate to="/" />} />{" "}
-          </Routes>
-        </div>
-      </div>
+          </Route>
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/films/:id" element={<MovieDetailsWrapper />} />
+          <Route path="*" element={<Navigate to="/home" />} />
+        </Route>
+      </Routes>
     </Router>
   );
 }

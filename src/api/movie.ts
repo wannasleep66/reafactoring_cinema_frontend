@@ -44,7 +44,7 @@ export type FilmListResponse = {
 };
 
 export async function getFilms(
-  params?: PaginationQuery,
+  params?: PaginationQuery
 ): Promise<{ data: Film[]; pagination: Pagination }> {
   const { data } = await api.get<FilmListResponse>("/films", {
     params: params,
@@ -74,27 +74,17 @@ export async function getFilm(id: Film["id"]): Promise<Film> {
   };
 }
 
-export async function createFilm(token: string, input: FilmCreate) {
-  const { data } = await api.post<FilmResponse>("/films", input, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function createFilm(input: FilmCreate) {
+  const { data } = await api.post<FilmResponse>("/films", input);
   return data;
 }
 
-export async function updateFilm(
-  token: string,
-  id: Film["id"],
-  input: FilmUpdate,
-) {
-  const { data } = await api.put<FilmResponse>(`/films/${id}`, input, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function updateFilm(id: Film["id"], input: FilmUpdate) {
+  const { data } = await api.put<FilmResponse>(`/films/${id}`, input);
   return data;
 }
 
-export async function deleteFilm(token: string, id: Film["id"]) {
-  const { data } = await api.delete(`/films/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function deleteFilm(id: Film["id"]) {
+  const { data } = await api.delete(`/films/${id}`);
   return data;
 }

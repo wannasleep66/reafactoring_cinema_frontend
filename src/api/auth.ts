@@ -1,5 +1,12 @@
 import { api } from "./http";
 
+export type TokenPayload = {
+  sub: string;
+  role: "ADMIN" | "USER";
+  exp: number;
+  iat: number;
+};
+
 export interface AuthResponse {
   accessToken: string;
 }

@@ -16,11 +16,7 @@ type MovieFormSchema = {
   ageRating: FilmAgeRating;
 };
 
-interface MoviesManagementProps {
-  token: string;
-}
-
-export default function MoviesManagement({ token }: MoviesManagementProps) {
+export default function MoviesManagement() {
   const { data: movies, refetch } = useQuery({
     queryFn: () => getFilms({ page: 0, size: 100 }).then((res) => res.data),
   });
@@ -28,12 +24,11 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
   const [editing, setEditing] = useState<MovieFormSchema | null>(null);
 
   const handleSave = async (movie: MovieFormSchema) => {
-    if (!token) return;
     try {
       if (movie.id) {
-        await updateFilm(token, movie.id, movie);
+        await updateFilm(movie.id, movie);
       } else {
-        const data = await createFilm(token, movie);
+        const data = await createFilm(movie);
         movie.id = data.id;
       }
       refetch();
@@ -44,9 +39,9 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token || !window.confirm("Удалить этот фильм?")) return;
+    if (!window.confirm("Удалить этот фильм?")) return;
     try {
-      await deleteFilm(token, id);
+      await deleteFilm(id);
       refetch();
     } catch (err) {
       console.error("Ошибка удаления фильма:", err);
@@ -134,7 +129,7 @@ function MovieForm({ movie, onSave, onCancel }: MovieFormProps) {
   const [form, setForm] = useState(movie);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setForm({
