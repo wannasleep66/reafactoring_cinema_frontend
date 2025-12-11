@@ -1,4 +1,5 @@
 import { api } from "./http";
+import { setAuthToken, clearAuthToken, getAuthToken } from "../utils/auth";
 
 export type TokenPayload = {
   sub: string;
@@ -22,7 +23,7 @@ export async function registerUser(data: {
   const response = await api.post("/auth/register", data, {
     headers: { "Content-Type": "application/json" },
   });
-  localStorage.setItem("token", response.data.accessToken);
+  setAuthToken(response.data.accessToken);
   return response.data;
 }
 
@@ -33,15 +34,15 @@ export async function loginUser(data: {
   const response = await api.post("/auth/login", data, {
     headers: { "Content-Type": "application/json" },
   });
-  localStorage.setItem("token", response.data.accessToken);
+  setAuthToken(response.data.accessToken);
   return response.data;
 }
 
 export function logout() {
-  localStorage.removeItem("token");
+  clearAuthToken();
 }
 
 export function getCurrentUser() {
-  const token = localStorage.getItem("token");
+  const token = getAuthToken();
   return token ? { accessToken: token } : null;
 }
