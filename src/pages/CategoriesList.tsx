@@ -1,3 +1,5 @@
+import { formatCents } from "../utils/money";
+
 type CategoryFormSchema = {
   id?: string;
   name: string;
@@ -23,7 +25,7 @@ export default function CategoriesList({
           className="list-group-item d-flex justify-content-between align-items-center"
         >
           <span>
-            <strong>{c.name}</strong> — {c.priceCents}₽
+            <strong>{c.name}</strong> — {formatCents(c.priceCents)}
           </span>
           <span>
             <button

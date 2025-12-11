@@ -57,7 +57,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
   const getCategory = (catId: string) =>
     hall?.plan.categories.find((c) => c.id === catId);
 
-  const totalPrice = selectedSeats.reduce((sum, id) => {
+  const totalCents = selectedSeats.reduce((sum, id) => {
     const seat = hall?.plan.seats.find((s) => s.id === id);
     if (!seat) return sum;
     const cat = getCategory(seat.categoryId);
@@ -178,7 +178,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     tickets={tickets as any}
                     categories={hall.plan.categories}
-                    totalPrice={totalPrice}
+                    totalCents={totalCents}
                     onReserve={handleReserve}
                   />
                 )}

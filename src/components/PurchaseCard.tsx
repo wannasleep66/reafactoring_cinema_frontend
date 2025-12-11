@@ -1,5 +1,6 @@
 import type { Film } from "../api/movie";
 import type { Purchase } from "../api/purchases";
+import { formatCents } from "../utils/money";
 
 export type PurchaseWithFilm = Purchase & {
   film: Film;
@@ -13,7 +14,7 @@ const PurchaseCard: React.FC<{ purchase: PurchaseWithFilm }> = ({
       <div className="card-body text-light">
         <strong>{purchase.film.title}</strong>
         <br />
-        Итого: {purchase.totalCents}₽
+        Итого: {formatCents(purchase.totalCents)}
         <br />
         Статус: {purchase.status}
       </div>

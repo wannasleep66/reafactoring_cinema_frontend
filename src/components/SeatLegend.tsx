@@ -1,5 +1,6 @@
 import React from "react";
 import type { Category } from "./SeatGrid";
+import { formatCents } from "../utils/money";
 
 interface SeatLegendProps {
   categories: Category[];
@@ -25,7 +26,7 @@ const SeatLegend: React.FC<SeatLegendProps> = ({ categories }) => {
             }}
           ></span>
           <small className="text-light">
-            {c.name} — {c.priceCents} ₽
+            {c.name} — {formatCents(c.priceCents)}
           </small>
         </div>
       ))}

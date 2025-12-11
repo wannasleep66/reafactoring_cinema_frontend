@@ -1,14 +1,15 @@
 import React from "react";
+import { formatCents } from "../utils/money";
 
 interface BookingSummaryProps {
   selectedSeatsCount: number;
-  totalPrice: number;
+  totalCents: number;
   onBook: () => void;
 }
 
 const BookingSummary: React.FC<BookingSummaryProps> = ({
   selectedSeatsCount,
-  totalPrice,
+  totalCents,
   onBook,
 }) => {
   return (
@@ -17,7 +18,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
         <strong>Выбрано мест:</strong> {selectedSeatsCount}
       </p>
       <p>
-        <strong>Итого:</strong> {totalPrice} ₽
+        <strong>Итого:</strong> {formatCents(totalCents)}
       </p>
       <button
         className="btn btn-primary px-5"

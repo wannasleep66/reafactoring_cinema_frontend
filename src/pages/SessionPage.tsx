@@ -37,11 +37,11 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
   const getCategory = (catId: string) =>
     plan?.categories.find((c) => c.id === catId);
 
-  const totalPrice = selectedSeats.reduce((sum, id) => {
+  const totalCents = selectedSeats.reduce((sum, id) => {
     const seat = plan?.seats.find((s) => s.id === id);
     if (!seat) return sum;
     const cat = getCategory(seat.categoryId);
-    return sum + (cat ? cat.priceCents / 100 : 0);
+    return sum + (cat ? cat.priceCents : 0);
   }, 0);
 
   return (
@@ -80,7 +80,7 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
             </div>
             <BookingSummary
               selectedSeatsCount={selectedSeats.length}
-              totalPrice={totalPrice}
+              totalCents={totalCents}
               onBook={() => {
                 // Логика бронирования
               }}

@@ -1,12 +1,13 @@
 import React from "react";
 import type { Seat, Category, Ticket } from "./SeatGrid";
+import { formatCents } from "../utils/money";
 
 interface BookingInfoProps {
   selectedSeats: string[];
   seats: Seat[];
   tickets: Ticket[] | undefined;
   categories: Category[];
-  totalPrice: number;
+  totalCents: number;
   onReserve: () => void;
 }
 
@@ -15,7 +16,7 @@ const BookingInfo: React.FC<BookingInfoProps> = ({
   seats,
   tickets,
   categories,
-  totalPrice,
+  totalCents,
   onReserve,
 }) => {
   const getCategory = (catId: string) => categories.find((c) => c.id === catId);
@@ -32,8 +33,8 @@ const BookingInfo: React.FC<BookingInfoProps> = ({
       if (!seat) return "";
       const cat = getCategory(ticket.categoryId);
       return `Ряд ${seat.row + 1}, №${seat.number} (${cat?.name} — ${
-        cat ? cat.priceCents : 0
-      } ₽)`;
+        cat ? formatCents(cat.priceCents) : formatCents(0)
+      })`;
     })
     .filter(Boolean)
     .join("; ");
@@ -44,7 +45,7 @@ const BookingInfo: React.FC<BookingInfoProps> = ({
         <strong>Выбраны места:</strong> {seatsInfo}
       </p>
       <p>
-        <strong>Итого:</strong> {totalPrice} ₽
+        <strong>Итого:</strong> {formatCents(totalCents)}
       </p>
       <button className="btn btn-primary px-5" onClick={onReserve}>
         Забронировать

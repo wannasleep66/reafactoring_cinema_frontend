@@ -35,7 +35,7 @@ export interface Purchase {
   movie: movie.Movie;
   session: movie.Session;
   seats: movie.Seat[];
-  totalPrice: number;
+  totalCents: number;
 }
 
 export interface Review {
