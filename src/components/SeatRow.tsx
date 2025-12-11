@@ -1,6 +1,7 @@
 import React from "react";
 import type { Seat } from "../api/halls";
 import { CONFIG } from "../constants/config";
+import { clsx } from "../utils/clsx";
 
 interface Category {
   id: string;
@@ -41,19 +42,20 @@ const SeatRow: React.FC<SeatRowProps> = ({
         const category = getCategory(seat.categoryId);
         const isSelected = selectedSeats.includes(seat.id);
         const isTaken = seat.status !== "AVAILABLE";
-
-        const color = isTaken
-          ? "btn-secondary"
-          : isSelected
-            ? "btn-success"
-            : category?.name?.toLowerCase().includes("vip")
-              ? "btn-primary"
-              : "btn-outline-light";
+        const isVip = category?.name?.toLowerCase().includes("vip") ?? false;
 
         return (
           <button
             key={seat.id}
-            className={`btn ${color}`}
+            className={clsx([
+              "btn",
+              {
+                "btn-success": isSelected,
+                "btn-secondary": isTaken,
+                "btn-primary": isVip,
+                "btn-outline-light": !isSelected && !isTaken && !isVip,
+              },
+            ])}
             style={{
               width: CONFIG.UI.SEAT_BUTTON_SIZE,
               height: CONFIG.UI.SEAT_BUTTON_SIZE,

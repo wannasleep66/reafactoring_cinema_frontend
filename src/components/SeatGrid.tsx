@@ -1,5 +1,6 @@
 import React from "react";
 import { CONFIG } from "../constants/config";
+import { clsx } from "../utils/clsx";
 
 export interface Seat {
   id: string;
@@ -84,15 +85,19 @@ const SeatGrid: React.FC<SeatGridProps> = ({
               const category = getCategory(seat.categoryId);
               const isSelected = selectedSeats.includes(seat.id);
 
-              let color = "btn-outline-light";
-              if (status === "SOLD") color = "btn-danger";
-              else if (status === "RESERVED") color = "btn-warning";
-              else if (isSelected) color = "btn-success";
-
               return (
                 <button
                   key={seat.id}
-                  className={`btn ${color}`}
+                  className={clsx([
+                    "btn",
+                    {
+                      "btn-danger": status === "SOLD",
+                      "btn-warning": status === "RESERVED",
+                      "btn-success": isSelected,
+                      "btn-outline-light":
+                        status === "AVAILABLE" && !isSelected,
+                    },
+                  ])}
                   style={{
                     width: CONFIG.UI.SEAT_BUTTON_SIZE,
                     height: CONFIG.UI.SEAT_BUTTON_SIZE,
