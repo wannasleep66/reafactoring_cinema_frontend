@@ -64,6 +64,9 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
     return sum + (cat ? cat.priceCents : 0);
   }, 0);
 
+  const canBook = selectedSeats.length > 0 && !purchase;
+  const canPay = purchase !== null;
+
   const handleReserve = async () => {
     try {
       for (const seatId of selectedSeats) {
@@ -168,7 +171,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                   </div>
                 )}
 
-                {selectedSeats.length > 0 && hall && !purchase && (
+                {canBook && hall && (
                   <BookingInfo
                     selectedSeats={selectedSeats}
                     seats={hall.plan.seats}
@@ -180,7 +183,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                   />
                 )}
 
-                {purchase && hall && (
+                {canPay && hall && (
                   <PaymentForm
                     purchase={purchase}
                     seats={hall.plan.seats}
