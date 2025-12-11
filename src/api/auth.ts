@@ -42,7 +42,10 @@ export function logout() {
   clearAuthToken();
 }
 
-export function getCurrentUser() {
+export function getStoredAuthToken() {
   const token = getAuthToken();
   return token ? { accessToken: token } : null;
 }
+
+// Backwards-compatible alias: prefer getStoredAuthToken
+export { getStoredAuthToken as getCurrentUser };
