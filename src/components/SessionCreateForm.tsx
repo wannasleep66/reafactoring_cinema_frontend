@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import type { Film } from "../api/movie";
 import type { Hall } from "../api/halls";
+import { calculatePeriodEnd, calculateSessionCount } from "../utils/date";
 
 type SessionFormSchema = {
   id?: string;
@@ -48,26 +49,11 @@ export default function SessionCreateForm({
   }, [isPeriodic, form.startAt]);
 
   useEffect(() => {
-    if (!isPeriodic || !periodEnd) {
-      setSessionCount(null);
-      return;
+    if (isPeriodic && !periodEnd) {
+      setPeriodEnd(calculatePeriodEnd(form.startAt));
     }
-
-    const start = new Date(form.startAt);
-    const end = new Date(periodEnd);
-    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
-      setSessionCount(null);
-      return;
-    }
-
-    const diffDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
-    const count =
-      period === "EVERY_DAY"
-        ? Math.floor(diffDays) + 1
-        : Math.floor(diffDays / 7) + 1;
-
-    setSessionCount(count);
-  }, [form.startAt, periodEnd, period, isPeriodic]);
+    setSessionCount(calculateSessionCount(form.startAt, periodEnd, period));
+  }, [isPeriodic, form.startAt, periodEnd, period]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
