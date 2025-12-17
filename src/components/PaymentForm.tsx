@@ -6,17 +6,19 @@ interface Purchase {
   ticketIds: string[];
 }
 
+interface CardData {
+  cardNumber: string;
+  expiryDate: string;
+  cvv: string;
+  cardHolderName: string;
+}
+
 interface PaymentFormProps {
   purchase: Purchase;
   seats: Seat[];
   tickets: Ticket[] | undefined;
   categories: Category[];
-  onPayment: (cardData: {
-    cardNumber: string;
-    expiryDate: string;
-    cvv: string;
-    cardHolderName: string;
-  }) => void;
+  onPayment: (cardData: CardData) => void;
 }
 
 const PaymentForm: React.FC<PaymentFormProps> = ({
@@ -26,14 +28,24 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   categories,
   onPayment,
 }) => {
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiryDate, setExpiryDate] = useState("");
-  const [cvv, setCvv] = useState("");
-  const [cardHolderName, setCardHolderName] = useState("");
+  const [cardData, setCardData] = useState<CardData>({
+    cardNumber: "",
+    expiryDate: "",
+    cvv: "",
+    cardHolderName: "",
+  });
 
   const handlePaymentClick = () => {
-    onPayment({ cardNumber, expiryDate, cvv, cardHolderName });
+    onPayment(cardData);
   };
+
+  const handleCardDataChange = (field: keyof CardData, value: string) => {
+    setCardData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const getCategory = (catId: string) => categories.find((c) => c.id === catId);
 
   const seatsInfo = tickets
@@ -67,26 +79,26 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         <input
           placeholder="Номер карты"
           className="form-control"
-          value={cardNumber}
-          onChange={(e) => setCardNumber(e.target.value)}
+          value={cardData.cardNumber}
+          onChange={(e) => handleCardDataChange('cardNumber', e.target.value)}
         />
         <input
           placeholder="Срок (MM/YY)"
           className="form-control"
-          value={expiryDate}
-          onChange={(e) => setExpiryDate(e.target.value)}
+          value={cardData.expiryDate}
+          onChange={(e) => handleCardDataChange('expiryDate', e.target.value)}
         />
         <input
           placeholder="CVV"
           className="form-control"
-          value={cvv}
-          onChange={(e) => setCvv(e.target.value)}
+          value={cardData.cvv}
+          onChange={(e) => handleCardDataChange('cvv', e.target.value)}
         />
         <input
           placeholder="Имя владельца карты"
           className="form-control"
-          value={cardHolderName}
-          onChange={(e) => setCardHolderName(e.target.value)}
+          value={cardData.cardHolderName}
+          onChange={(e) => handleCardDataChange('cardHolderName', e.target.value)}
         />
         <button
           className="btn btn-success px-5 mt-2"
