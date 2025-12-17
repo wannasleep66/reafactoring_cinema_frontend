@@ -3,6 +3,7 @@ import type { Seat } from "../api/halls";
 import { CONFIG } from "../constants/config";
 import { clsx } from "../utils/clsx";
 import Money from "../types/money";
+import { isTaken as seatIsTaken } from "../types/seat";
 
 interface Category {
   id: string;
@@ -42,7 +43,7 @@ const SeatRow: React.FC<SeatRowProps> = ({
       {rowSeats.map((seat) => {
         const category = getCategory(seat.categoryId);
         const isSelected = selectedSeats.includes(seat.id);
-        const isTaken = seat.status !== "AVAILABLE";
+        const isTaken = seatIsTaken(seat.status);
         const isVip = category?.name?.toLowerCase().includes("vip") ?? false;
 
         return (

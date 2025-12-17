@@ -3,6 +3,7 @@ import { CONFIG } from "../constants/config";
 import { clsx } from "../utils/clsx";
 import Money from "../types/money";
 import type { SeatId } from "../types/ids";
+import { SeatStatusValues } from "../types/seat";
 
 export interface Seat {
   id: string;
@@ -87,18 +88,17 @@ const SeatGrid: React.FC<SeatGridProps> = ({
               const status = getSeatStatus(seat.id);
               const category = getCategory(seat.categoryId);
               const isSelected = selectedSeats.includes(seat.id as SeatId);
-
               return (
                 <button
                   key={seat.id}
                   className={clsx([
                     "btn",
                     {
-                      "btn-danger": status === "SOLD",
-                      "btn-warning": status === "RESERVED",
+                      "btn-danger": status === SeatStatusValues.Sold,
+                      "btn-warning": status === SeatStatusValues.Reserved,
                       "btn-success": isSelected,
                       "btn-outline-light":
-                        status === "AVAILABLE" && !isSelected,
+                        status === SeatStatusValues.Available && !isSelected,
                     },
                   ])}
                   style={{
