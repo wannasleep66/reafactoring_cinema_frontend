@@ -12,6 +12,7 @@ import { getTickets, reserveTicket } from "../api/tickets";
 import { createPurchase } from "../api/purchases";
 import { processPayment } from "../api/payment";
 import Card from "../types/card";
+import type { SeatId } from "../types/ids";
 import { useQuery } from "../hooks/query";
 
 interface Props {
@@ -53,13 +54,13 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
 
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [purchase, setPurchase] = useState<Purchase | null>(null);
-  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [selectedSeats, setSelectedSeats] = useState<SeatId[]>([]);
 
   const getCategory = (catId: string) =>
     hall?.plan.categories.find((c) => c.id === catId);
 
   const totalPrice = selectedSeats.reduce((sum, id) => {
-    const seat = hall?.plan.seats.find((s) => s.id === id);
+    const seat = hall?.plan.seats.find((s) => s.id === (id as string));
     if (!seat) return sum;
     const cat = getCategory(seat.categoryId);
     return sum + (cat ? cat.priceCents : 0);
@@ -79,7 +80,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
 
       const reservedTickets =
         tickets
-          ?.filter((t) => selectedSeats.includes(t.seatId))
+          ?.filter((t) => selectedSeats.includes(t.seatId as unknown as SeatId))
           .map((t) => t.id) || [];
 
       const purchases = await createPurchase({
