@@ -11,6 +11,7 @@ import { getHall } from "../api/halls";
 import { getTickets, reserveTicket } from "../api/tickets";
 import { createPurchase } from "../api/purchases";
 import { processPayment } from "../api/payment";
+import Card from "../types/card";
 import { useQuery } from "../hooks/query";
 
 interface Props {
@@ -91,19 +92,11 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
     }
   };
 
-  const handlePayment = async (cardData: {
-    cardNumber: string;
-    expiryDate: string;
-    cvv: string;
-    cardHolderName: string;
-  }) => {
+  const handlePayment = async (cardData: Card) => {
     try {
       await processPayment({
         purchaseId: purchase!.id,
-        cardNumber: cardData.cardNumber,
-        expiryDate: cardData.expiryDate,
-        cvv: cardData.cvv,
-        cardHolderName: cardData.cardHolderName,
+        ...cardData.toApiPayload(),
       });
       alert("Оплата прошла успешно!");
       setPurchase(null);

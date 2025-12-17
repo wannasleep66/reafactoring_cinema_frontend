@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { Seat, Category, Ticket } from "./SeatGrid";
 import Money from "../types/money";
+import Card from "../types/card";
 
 interface Purchase {
   id: string;
@@ -12,12 +13,7 @@ interface PaymentFormProps {
   seats: Seat[];
   tickets: Ticket[] | undefined;
   categories: Category[];
-  onPayment: (cardData: {
-    cardNumber: string;
-    expiryDate: string;
-    cvv: string;
-    cardHolderName: string;
-  }) => void;
+  onPayment: (card: Card) => void;
 }
 
 const PaymentForm: React.FC<PaymentFormProps> = ({
@@ -33,7 +29,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   const [cardHolderName, setCardHolderName] = useState("");
 
   const handlePaymentClick = () => {
-    onPayment({ cardNumber, expiryDate, cvv, cardHolderName });
+    const card = Card.from({ cardNumber, expiryDate, cvv, cardHolderName });
+    onPayment(card);
   };
   const getCategory = (catId: string) => categories.find((c) => c.id === catId);
 
