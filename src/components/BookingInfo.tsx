@@ -1,5 +1,6 @@
 import React from "react";
 import type { Seat, Category, Ticket } from "./SeatGrid";
+import Money from "../types/money";
 
 interface BookingInfoProps {
   selectedSeats: string[];
@@ -31,9 +32,9 @@ const BookingInfo: React.FC<BookingInfoProps> = ({
       const seat = seats.find((s) => s.id === id);
       if (!seat) return "";
       const cat = getCategory(ticket.categoryId);
-      return `Ряд ${seat.row + 1}, №${seat.number} (${cat?.name} — ${
+      return `Ряд ${seat.row + 1}, №${seat.number} (${cat?.name} — ${Money.formatCents(
         cat ? cat.priceCents : 0
-      } ₽)`;
+      )})`;
     })
     .filter(Boolean)
     .join("; ");

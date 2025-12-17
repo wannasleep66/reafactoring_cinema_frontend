@@ -2,6 +2,7 @@ import React from "react";
 import type { Seat } from "../api/halls";
 import { CONFIG } from "../constants/config";
 import { clsx } from "../utils/clsx";
+import Money from "../types/money";
 
 interface Category {
   id: string;
@@ -62,9 +63,9 @@ const SeatRow: React.FC<SeatRowProps> = ({
             }}
             disabled={isTaken}
             onClick={() => onSeatClick(seat.id)}
-            title={`${category?.name || "Место"} — ${
-              category ? category.priceCents / 100 : 0
-            } ₽`}
+            title={`${category?.name || "Место"} — ${Money.formatCents(
+              category ? category.priceCents : 0
+            )}`}
           >
             {seat.number}
           </button>

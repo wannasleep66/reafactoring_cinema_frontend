@@ -1,6 +1,7 @@
 import React from "react";
 import { CONFIG } from "../constants/config";
 import { clsx } from "../utils/clsx";
+import Money from "../types/money";
 
 export interface Seat {
   id: string;
@@ -104,9 +105,9 @@ const SeatGrid: React.FC<SeatGridProps> = ({
                   }}
                   disabled={status !== "AVAILABLE"}
                   onClick={() => handleSeatClick(seat.id)}
-                  title={`${category?.name || "Место"} — ${
+                  title={`${category?.name || "Место"} — ${Money.formatCents(
                     category ? category.priceCents : 0
-                  } ₽`}
+                  )}`}
                 >
                   {seat.number}
                 </button>
