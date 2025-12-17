@@ -21,6 +21,12 @@ interface SessionCreateFormProps {
   onCancel: () => void;
 }
 
+interface PeriodicConfig {
+  enabled: boolean;
+  period: "EVERY_DAY" | "EVERY_WEEK";
+  endAt: string;
+}
+
 export default function SessionCreateForm({
   movies,
   halls,
@@ -34,26 +40,28 @@ export default function SessionCreateForm({
     startAt: new Date().toISOString().slice(0, 16),
     periodicConfig: undefined,
   });
-  const [isPeriodic, setIsPeriodic] = useState(false);
-  const [period, setPeriod] = useState<"EVERY_DAY" | "EVERY_WEEK">("EVERY_DAY");
-  const [periodEnd, setPeriodEnd] = useState("");
+  const [periodicConfig, setPeriodicConfig] = useState<PeriodicConfig>({
+    enabled: false,
+    period: "EVERY_DAY",
+    endAt: "",
+  });
   const [sessionCount, setSessionCount] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!periodEnd && isPeriodic && form.startAt) {
+    if (!periodicConfig.endAt && periodicConfig.enabled && form.startAt) {
       const date = new Date(form.startAt);
       date.setDate(date.getDate() + 7);
-      setPeriodEnd(date.toISOString().slice(0, 16));
+      setPeriodicConfig(prev => ({ ...prev, endAt: date.toISOString().slice(0, 16) }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPeriodic, form.startAt]);
+  }, [periodicConfig.enabled, form.startAt]);
 
   useEffect(() => {
-    if (isPeriodic && !periodEnd) {
-      setPeriodEnd(calculatePeriodEnd(form.startAt));
+    if (periodicConfig.enabled && !periodicConfig.endAt) {
+      setPeriodicConfig(prev => ({ ...prev, endAt: calculatePeriodEnd(form.startAt) }));
     }
-    setSessionCount(calculateSessionCount(form.startAt, periodEnd, period));
-  }, [isPeriodic, form.startAt, periodEnd, period]);
+    setSessionCount(calculateSessionCount(form.startAt, periodicConfig.endAt, periodicConfig.period));
+  }, [periodicConfig.enabled, periodicConfig.endAt, periodicConfig.period, form.startAt]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
@@ -106,20 +114,20 @@ export default function SessionCreateForm({
           type="checkbox"
           className="form-check-input"
           id="periodicCheck"
-          checked={isPeriodic}
-          onChange={() => setIsPeriodic(!isPeriodic)}
+          checked={periodicConfig.enabled}
+          onChange={(e) => setPeriodicConfig(prev => ({ ...prev, enabled: e.target.checked }))}
         />
         <label htmlFor="periodicCheck" className="mb-0 text-light">
           Повторять сеанс
         </label>
       </div>
 
-      {isPeriodic && (
+      {periodicConfig.enabled && (
         <>
           <select
-            value={period}
+            value={periodicConfig.period}
             onChange={(e) =>
-              setPeriod(e.target.value as "EVERY_DAY" | "EVERY_WEEK")
+              setPeriodicConfig(prev => ({ ...prev, period: e.target.value as "EVERY_DAY" | "EVERY_WEEK" }))
             }
             className="form-control mb-2"
           >
@@ -131,15 +139,15 @@ export default function SessionCreateForm({
           <input
             className="form-control mb-2"
             type="datetime-local"
-            value={periodEnd}
-            onChange={(e) => setPeriodEnd(e.target.value)}
+            value={periodicConfig.endAt}
+            onChange={(e) => setPeriodicConfig(prev => ({ ...prev, endAt: e.target.value }))}
           />
 
           {sessionCount && (
             <div className="alert alert-info p-2 mt-2">
               📅 Будет создано <strong>{sessionCount}</strong>{" "}
               {sessionCount === 1 ? "сеанс" : "сеансов"} до{" "}
-              {new Date(periodEnd).toLocaleDateString("ru-RU")}
+              {new Date(periodicConfig.endAt).toLocaleDateString("ru-RU")}
             </div>
           )}
         </>
@@ -151,10 +159,10 @@ export default function SessionCreateForm({
           onClick={() =>
             onSave({
               ...form,
-              periodicConfig: isPeriodic
+              periodicConfig: periodicConfig.enabled
                 ? {
-                    period,
-                    periodGenerationEndsAt: new Date(periodEnd).toISOString(),
+                    period: periodicConfig.period,
+                    periodGenerationEndsAt: new Date(periodicConfig.endAt).toISOString(),
                   }
                 : undefined,
             })
