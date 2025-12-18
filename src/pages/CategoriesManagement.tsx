@@ -3,7 +3,7 @@ import {
   getCategories,
 } from "../api/categories";
 import { useQuery } from "../hooks/query";
-import { useCreateCategoryMutation, useUpdateCategoryMutation, useDeleteCategoryMutation } from "../hooks/useCategoryMutations";
+import { useCategoryMutations } from "../hooks/useCategoryMutations";
 import CategoryCreateForm from "./CategoryCreateForm";
 import CategoryEditForm from "./CategoryEditForm";
 import CategoriesList from "./CategoriesList";
@@ -24,9 +24,10 @@ export default function CategoriesManagement() {
       }).then((res) => res.data),
   });
 
-  const { mutate: createCategory } = useCreateCategoryMutation();
-  const { mutate: updateCategory } = useUpdateCategoryMutation();
-  const { mutate: deleteCategory } = useDeleteCategoryMutation();
+  const { createMutation, updateMutation, deleteMutation } = useCategoryMutations();
+  const { mutate: createCategory } = createMutation;
+  const { mutate: updateCategory } = updateMutation;
+  const { mutate: deleteCategory } = deleteMutation;
 
   const [editing, setEditing] = useState<CategoryFormSchema | null>(null);
   const [isCreating, setIsCreating] = useState(false);

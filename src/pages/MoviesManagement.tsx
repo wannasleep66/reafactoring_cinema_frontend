@@ -4,7 +4,7 @@ import {
   type FilmAgeRating,
 } from "../api/movie";
 import { useQuery } from "../hooks/query";
-import { useCreateMovieMutation, useUpdateMovieMutation, useDeleteMovieMutation } from "../hooks/useMovieMutations";
+import { useMovieMutations } from "../hooks/useMovieMutations";
 import { CONFIG } from "../constants/config";
 
 type MovieFormSchema = {
@@ -24,9 +24,10 @@ export default function MoviesManagement() {
       }).then((res) => res.data),
   });
 
-  const { mutate: createMovie } = useCreateMovieMutation();
-  const { mutate: updateMovie } = useUpdateMovieMutation();
-  const { mutate: deleteMovie } = useDeleteMovieMutation();
+  const { createMutation, updateMutation, deleteMutation } = useMovieMutations();
+  const { mutate: createMovie } = createMutation;
+  const { mutate: updateMovie } = updateMutation;
+  const { mutate: deleteMovie } = deleteMutation;
 
   const [editing, setEditing] = useState<MovieFormSchema | null>(null);
 
