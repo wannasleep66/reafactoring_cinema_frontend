@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { getSession } from "../api/session";
 import { getHall } from "../api/halls";
 import { useQuery } from "../hooks/query";
-import SeatRow from "../components/SeatRow";
+import SeatGrid from "../components/SeatGrid";
 import BookingSummary from "../components/BookingSummary";
 import Fallback from "../components/shared/Fallback";
 
@@ -68,13 +68,13 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
               style={{ gap: "10px" }}
             >
               {rows.map((rowNum) => (
-                <SeatRow
+                <SeatGrid
                   key={rowNum}
-                  rowNum={rowNum}
                   seats={plan!.seats}
                   selectedSeats={selectedSeats}
                   categories={plan!.categories}
                   onSeatClick={handleSeatClick}
+                  rowNum={rowNum}
                 />
               ))}
             </div>

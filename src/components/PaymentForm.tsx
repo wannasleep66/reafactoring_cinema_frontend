@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { Seat, Category, Ticket } from "./SeatGrid";
+import type { Seat, Category, Ticket } from "../types/seats";
 import Money from "../types/money";
 import Card from "../types/card";
 

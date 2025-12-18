@@ -155,10 +155,12 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
 
                     <SeatGrid
                       seats={hall.plan.seats}
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      tickets={tickets as any}
+                      selectedSeats={selectedSeats}
                       categories={hall.plan.categories}
-                      onSelectedSeatsChange={(newSelectedSeats) => {
+                      onSeatClick={(seatId) => {
+                        const newSelectedSeats = selectedSeats.includes(seatId as SeatId)
+                          ? selectedSeats.filter((id) => id !== (seatId as SeatId))
+                          : [...selectedSeats, seatId as SeatId];
                         setSelectedSeats(newSelectedSeats);
                       }}
                     />

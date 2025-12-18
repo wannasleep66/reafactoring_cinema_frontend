@@ -1,5 +1,5 @@
 import React from "react";
-import type { Seat, Category, Ticket } from "./SeatGrid";
+import type { Seat, Category, Ticket } from "../types/seats";
 import Money from "../types/money";
 import type { SeatId } from "../types/ids";
 
