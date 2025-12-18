@@ -3,7 +3,7 @@ import { getSession } from "../api/session";
 import { getHall } from "../api/halls";
 import { useQuery } from "../hooks/query";
 import SeatGrid from "../components/SeatGrid";
-import BookingSummary from "../components/BookingSummary";
+import BookingDisplay from "../components/BookingDisplay";
 import Fallback from "../components/shared/Fallback";
 
 interface Props {
@@ -78,12 +78,14 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
                 />
               ))}
             </div>
-            <BookingSummary
-              selectedSeatsCount={selectedSeats.length}
+            <BookingDisplay
+              selectedSeats={selectedSeats}
               totalPrice={totalPrice}
-              onBook={() => {
+              onAction={() => {
                 // Логика бронирования
               }}
+              mode="summary"
+              actionLabel="Забронировать"
             />
           </>
         </Fallback>
