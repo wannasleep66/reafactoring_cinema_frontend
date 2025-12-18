@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import type { Seat, Category, Ticket } from "./SeatGrid";
+import Money from "../types/money";
+import Card from "../types/card";
 
 interface Purchase {
   id: string;
@@ -18,7 +20,7 @@ interface PaymentFormProps {
   seats: Seat[];
   tickets: Ticket[] | undefined;
   categories: Category[];
-  onPayment: (cardData: CardData) => void;
+  onPayment: (card: Card) => void;
 }
 
 const PaymentForm: React.FC<PaymentFormProps> = ({
@@ -36,7 +38,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   });
 
   const handlePaymentClick = () => {
-    onPayment(cardData);
+    const card = Card.from({ cardNumber, expiryDate, cvv, cardHolderName });
+    onPayment(card);
   };
 
   const handleCardDataChange = (field: keyof CardData, value: string) => {
@@ -54,7 +57,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       const cat = getCategory(t.categoryId);
       const seat = seats.find((s) => s.id === t.seatId);
       return seat
-        ? `Ряд ${seat.row + 1}, №${seat.number} (${cat?.name} — ${cat?.priceCents} ₽)`
+        ? `Ряд ${seat.row + 1}, №${seat.number} (${cat?.name} — ${Money.formatCents(
+            cat?.priceCents || 0
+          )})`
         : "";
     })
     .join("; ");
@@ -73,7 +78,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         <strong>Места:</strong> {seatsInfo}
       </p>
       <p>
-        <strong>Сумма:</strong> {totalAmount} ₽
+        <strong>Сумма:</strong> {Money.formatCents(totalAmount || 0)}
       </p>
       <div className="d-flex flex-column align-items-center gap-2">
         <input
