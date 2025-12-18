@@ -1,6 +1,7 @@
 import { jwtDecode } from "jwt-decode";
 import React, { createContext, useState, useEffect } from "react";
 import type { TokenPayload } from "../api/auth";
+import { getAuthToken, setAuthToken, clearAuthToken } from "../utils/auth";
 
 export const AdminRole = "ADMIN";
 export const UserRole = "USER";
@@ -34,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [session, setSessionState] = useState<SessionState | null>(null);
 
   useEffect(() => {
-    const raw = localStorage.getItem("session");
+    const raw = getAuthToken();
     if (raw) {
       setSessionState({
         token: raw,
@@ -44,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const setSession = (session: string) => {
-    localStorage.setItem("session", session);
+    setAuthToken(session);
     const decoded = jwtDecode<TokenPayload>(session);
     setSessionState({
       token: session,
@@ -53,7 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const clearSession = () => {
-    localStorage.removeItem("session");
+    clearAuthToken();
     setSessionState({
       token: undefined,
       role: undefined,

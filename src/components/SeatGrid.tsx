@@ -1,6 +1,9 @@
 import React from "react";
 import { CONFIG } from "../constants/config";
 import { clsx } from "../utils/clsx";
+import Money from "../types/money";
+import type { SeatId } from "../types/ids";
+import { SeatStatusValues } from "../types/seat";
 
 export interface Seat {
   id: string;
@@ -28,7 +31,7 @@ interface SeatGridProps {
   seats: Seat[];
   tickets: Ticket[] | undefined;
   categories: Category[];
-  onSelectedSeatsChange?: (selectedSeats: string[]) => void;
+  onSelectedSeatsChange?: (selectedSeats: SeatId[]) => void;
 }
 
 const SeatGrid: React.FC<SeatGridProps> = ({
@@ -37,12 +40,13 @@ const SeatGrid: React.FC<SeatGridProps> = ({
   categories,
   onSelectedSeatsChange,
 }) => {
-  const [selectedSeats, setSelectedSeats] = React.useState<string[]>([]);
+  const [selectedSeats, setSelectedSeats] = React.useState<SeatId[]>([]);
 
   const handleSeatClick = (seatId: string) => {
-    const newSelectedSeats = selectedSeats.includes(seatId)
-      ? selectedSeats.filter((id) => id !== seatId)
-      : [...selectedSeats, seatId];
+    const sid = seatId as SeatId;
+    const newSelectedSeats = selectedSeats.includes(sid)
+      ? selectedSeats.filter((id) => id !== sid)
+      : [...selectedSeats, sid];
 
     setSelectedSeats(newSelectedSeats);
     onSelectedSeatsChange?.(newSelectedSeats);
@@ -83,19 +87,18 @@ const SeatGrid: React.FC<SeatGridProps> = ({
             {rowSeats.map((seat) => {
               const status = getSeatStatus(seat.id);
               const category = getCategory(seat.categoryId);
-              const isSelected = selectedSeats.includes(seat.id);
-
+              const isSelected = selectedSeats.includes(seat.id as SeatId);
               return (
                 <button
                   key={seat.id}
                   className={clsx([
                     "btn",
                     {
-                      "btn-danger": status === "SOLD",
-                      "btn-warning": status === "RESERVED",
+                      "btn-danger": status === SeatStatusValues.Sold,
+                      "btn-warning": status === SeatStatusValues.Reserved,
                       "btn-success": isSelected,
                       "btn-outline-light":
-                        status === "AVAILABLE" && !isSelected,
+                        status === SeatStatusValues.Available && !isSelected,
                     },
                   ])}
                   style={{
@@ -104,9 +107,9 @@ const SeatGrid: React.FC<SeatGridProps> = ({
                   }}
                   disabled={status !== "AVAILABLE"}
                   onClick={() => handleSeatClick(seat.id)}
-                  title={`${category?.name || "Место"} — ${
+                  title={`${category?.name || "Место"} — ${Money.formatCents(
                     category ? category.priceCents : 0
-                  } ₽`}
+                  )}`}
                 >
                   {seat.number}
                 </button>
