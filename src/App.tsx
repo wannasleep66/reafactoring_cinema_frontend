@@ -10,7 +10,11 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import UserProfilePage from "./pages/UserProfilePage";
-import AdminDashboard from "./pages/AdminDashboard";
+import MoviesManagement from "./pages/MoviesManagement";
+import HallsManagement from "./pages/HallsManagement";
+import CategoriesManagement from "./pages/CategoriesManagement";
+import SessionsManagement from "./pages/SessionsManagement";
+import AdminLayout from "./pages/layouts/AdminLayout";
 import * as movie from "./api/movie";
 import { AdminRole, UserRole } from "./store/auth";
 import RootLayout from "./pages/layouts/RootLayout";
@@ -27,14 +31,33 @@ export default function App() {
             <Route path="/register" element={<RegisterPage />} />
           </Route>
           <Route element={<ProtectedLayout />}>
-            <Route
-              path="/admin"
-              element={
-                <HasRole role={AdminRole} redirect="/profile">
-                  <AdminDashboard />
-                </HasRole>
-              }
-            />
+            <Route path="/admin" element={<Navigate to="/admin/movies" />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route
+                path="movies"
+                element={
+                  <MoviesManagement />
+                }
+              />
+              <Route
+                path="halls"
+                element={
+                  <HallsManagement />
+                }
+              />
+              <Route
+                path="categories"
+                element={
+                  <CategoriesManagement />
+                }
+              />
+              <Route
+                path="sessions"
+                element={
+                  <SessionsManagement />
+                }
+              />
+            </Route>
             <Route
               path="/profile"
               element={
