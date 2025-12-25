@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { getSession } from "../api/session";
 import { getHall } from "../api/halls";
 import { useQuery } from "../hooks/query";
-import SeatRow from "../components/SeatRow";
-import BookingSummary from "../components/BookingSummary";
+import SeatGrid from "../components/SeatGrid";
+import BookingDisplay from "../components/BookingDisplay";
 import Fallback from "../components/shared/Fallback";
 
 interface Props {
@@ -68,22 +68,24 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
               style={{ gap: "10px" }}
             >
               {rows.map((rowNum) => (
-                <SeatRow
+                <SeatGrid
                   key={rowNum}
-                  rowNum={rowNum}
                   seats={plan!.seats}
                   selectedSeats={selectedSeats}
                   categories={plan!.categories}
                   onSeatClick={handleSeatClick}
+                  rowNum={rowNum}
                 />
               ))}
             </div>
-            <BookingSummary
-              selectedSeatsCount={selectedSeats.length}
+            <BookingDisplay
+              selectedSeats={selectedSeats}
               totalPrice={totalPrice}
-              onBook={() => {
+              onAction={() => {
                 // Логика бронирования
               }}
+              mode="summary"
+              actionLabel="Забронировать"
             />
           </>
         </Fallback>

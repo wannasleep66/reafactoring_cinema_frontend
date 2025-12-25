@@ -1,4 +1,4 @@
-import { api } from "./http";
+import { createCrudOperations } from "./crud";
 import type { Pagination, PaginationQuery } from "./pagination";
 
 export type SeatCategory = {
@@ -22,24 +22,16 @@ export type SeatCategoryListResponse = {
   pagination: Pagination;
 };
 
-export async function getCategories(params?: PaginationQuery) {
-  const { data } = await api.get<SeatCategoryListResponse>("/seat-categories", {
-    params: params,
-  });
-  return data;
-}
+// Создаем универсальные CRUD операции для SeatCategory
+const categoryCrud = createCrudOperations<SeatCategory, SeatCategoryCreate, SeatCategoryUpdate>(
+  "/seat-categories"
+);
 
-export async function createCategory(input: SeatCategoryCreate) {
-  await api.post("/seat-categories", input);
-}
-
-export async function updateCategory(
-  id: SeatCategory["id"],
-  input: SeatCategoryUpdate
-) {
-  await api.put(`/seat-categories/${id}`, input);
-}
-
-export async function deleteCategory(id: SeatCategory["id"]) {
-  await api.delete(`/seat-categories/${id}`);
-}
+// Экспортируем CRUD операции
+export const {
+  getAll: getCategories,
+  get: getCategory, // изменяем имя, чтобы избежать конфликта с названием типа
+  create: createCategory,
+  update: updateCategory,
+  delete: deleteCategory
+} = categoryCrud;

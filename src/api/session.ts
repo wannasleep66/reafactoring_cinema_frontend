@@ -1,3 +1,4 @@
+import { createCrudOperations } from "./crud";
 import { api } from "./http";
 import type { Pagination, PaginationQuery } from "./pagination";
 
@@ -38,30 +39,23 @@ export type GetSessionsQueryParams = PaginationQuery & {
   date?: string;
 };
 
+// Создаем универсальные CRUD операции для Session
+const sessionCrud = createCrudOperations<Session, SessionCreate, SessionUpdate>(
+  "/sessions"
+);
+
+// Экспортируем CRUD операции
+export const {
+  get: getSession,
+  create: createSession,
+  update: updateSession,
+  delete: deleteSession
+} = sessionCrud;
+
+// Экспортируем функцию получения списка с параметрами запроса (так как у нее специфичная сигнатура)
 export async function getSesssions(params?: GetSessionsQueryParams) {
   const { data } = await api.get<SessionListResponse>("/sessions", {
     params: params,
   });
-
-  return data;
-}
-
-export async function getSession(id: Session["id"]) {
-  const res = await api.get<Session>(`/sessions/${id}`);
-  return res.data;
-}
-
-export async function createSession(input: SessionCreate) {
-  const { data } = await api.post<Session>("/sessions", input);
-  return data;
-}
-
-export async function updateSession(id: Session["id"], input: SessionUpdate) {
-  const { data } = await api.put<Session>(`/sessions/${id}`, input);
-  return data;
-}
-
-export async function deleteSession(id: Session["id"]) {
-  const { data } = await api.delete(`/sessions/${id}`);
   return data;
 }
