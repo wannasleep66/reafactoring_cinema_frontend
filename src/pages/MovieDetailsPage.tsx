@@ -4,7 +4,7 @@ import ReviewsDisplay from "../components/ReviewsDisplay";
 import SessionSelector from "../components/SessionSelector";
 import SeatLegend from "../components/SeatLegend";
 import SeatGrid from "../components/SeatGrid";
-import BookingInfo from "../components/BookingInfo";
+import BookingDisplay from "../components/BookingDisplay";
 import PaymentForm from "../components/PaymentForm";
 import { getSesssions, type Session } from "../api/session";
 import { getHall } from "../api/halls";
@@ -155,10 +155,12 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
 
                     <SeatGrid
                       seats={hall.plan.seats}
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      tickets={tickets as any}
+                      selectedSeats={selectedSeats}
                       categories={hall.plan.categories}
-                      onSelectedSeatsChange={(newSelectedSeats) => {
+                      onSeatClick={(seatId) => {
+                        const newSelectedSeats = selectedSeats.includes(seatId as SeatId)
+                          ? selectedSeats.filter((id) => id !== (seatId as SeatId))
+                          : [...selectedSeats, seatId as SeatId];
                         setSelectedSeats(newSelectedSeats);
                       }}
                     />
@@ -166,14 +168,16 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                 )}
 
                 {canBook && hall && (
-                  <BookingInfo
+                  <BookingDisplay
                     selectedSeats={selectedSeats}
                     seats={hall.plan.seats}
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     tickets={tickets as any}
                     categories={hall.plan.categories}
                     totalPrice={totalPrice}
-                    onReserve={handleReserve}
+                    onAction={handleReserve}
+                    mode="detailed"
+                    actionLabel="Забронировать"
                   />
                 )}
 

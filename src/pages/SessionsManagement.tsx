@@ -5,7 +5,7 @@ import {
   getSesssions,
 } from "../api/session";
 import { useQuery } from "../hooks/query";
-import { useCreateSessionMutation, useUpdateSessionMutation, useDeleteSessionMutation } from "../hooks/useSessionMutations";
+import { useSessionMutations } from "../hooks/useSessionMutations";
 import SessionCreateForm from "../components/SessionCreateForm";
 import SessionEditForm from "../components/SessionEditForm";
 import SessionsList from "../components/SessionsList";
@@ -37,9 +37,10 @@ export default function SessionsManagement() {
       }).then((res) => res.data),
   });
 
-  const { mutate: createSession } = useCreateSessionMutation();
-  const { mutate: updateSession } = useUpdateSessionMutation();
-  const { mutate: deleteSession } = useDeleteSessionMutation();
+  const { createMutation, updateMutation, deleteMutation } = useSessionMutations();
+  const { mutate: createSession } = createMutation;
+  const { mutate: updateSession } = updateMutation;
+  const { mutate: deleteSession } = deleteMutation;
 
   const [editing, setEditing] = useState<SessionFormSchema | null>(null);
   const [isCreating, setIsCreating] = useState(false);

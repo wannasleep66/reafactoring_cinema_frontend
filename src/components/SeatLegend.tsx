@@ -1,5 +1,5 @@
 import React from "react";
-import type { Category } from "./SeatGrid";
+import type { Category } from "../types/seats";
 import Money from "../types/money";
 
 interface SeatLegendProps {
