@@ -4,7 +4,6 @@ import { getHall } from "../api/halls";
 import { useQuery } from "../hooks/query";
 import SeatGrid from "../components/SeatGrid";
 import BookingDisplay from "../components/BookingDisplay";
-import Fallback from "../components/shared/Fallback";
 
 interface Props {
   sessionId: string;
@@ -50,16 +49,12 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
         <button className="btn btn-outline-light mb-4" onClick={onBack}>
           ← Назад
         </button>
-        <Fallback
-          loading={loading}
-          loader={
-            <div className="text-center text-light py-5">
-              <h3>Загрузка данных...</h3>
-            </div>
-          }
-        >
+        {loading ? (
+          <div className="text-center text-light py-5">
+            <h3>Загрузка данных...</h3>
+          </div>
+        ) : (
           <>
-            {" "}
             <h2 className="text-center text-primary mb-4">
               Схема зала — Зал {plan!.hallId}
             </h2>
@@ -88,7 +83,7 @@ const SessionPage: React.FC<Props> = ({ sessionId, onBack }) => {
               actionLabel="Забронировать"
             />
           </>
-        </Fallback>
+        )}
       </div>
     </div>
   );

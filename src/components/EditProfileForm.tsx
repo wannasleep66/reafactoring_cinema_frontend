@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useQuery } from "../hooks/query";
 import { useUpdateProfileMutation } from "../hooks/useUpdateProfileMutation";
 import { useForm } from "../hooks/useForm";
-import Fallback from "./shared/Fallback";
 import { getCurrentUser, type User } from "../api/user";
 
 const EditProfileForm: React.FC = () => {
@@ -47,44 +46,48 @@ const EditProfileForm: React.FC = () => {
     <div className="card text-dark mb-4">
       <div className="card-body">
         <h2 className="card-title text-primary mb-3">Профиль</h2>
-        <Fallback loading={isProfileLoading}>
-          <div className="d-flex flex-column gap-2">
-            <input className="text-light" {...registerField("firstName")} />
-            <input className="text-light" {...registerField("lastName")} />
-            <input className="text-light" {...registerField("email")} />
-            <input className="text-light" {...registerField("gender")} />
-            <input className="text-light" {...registerField("age")} />
-          </div>
-          <div className="mt-4">
-            {!isEditing ? (
-              <>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => setIsEditing(true)}
-                >
-                  Редактировать
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  className="btn btn-success me-2"
-                  onClick={handleEdit}
-                  disabled={form.loading}
-                >
-                  {form.loading ? "Сохранение..." : "Сохранить"}
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setIsEditing(false)}
-                  disabled={form.loading}
-                >
-                  Отмена
-                </button>
-              </>
-            )}
-          </div>
-        </Fallback>
+        {isProfileLoading ? (
+          <div>Загружаем</div>
+        ) : (
+          <>
+            <div className="d-flex flex-column gap-2">
+              <input className="text-light" {...registerField("firstName")} />
+              <input className="text-light" {...registerField("lastName")} />
+              <input className="text-light" {...registerField("email")} />
+              <input className="text-light" {...registerField("gender")} />
+              <input className="text-light" {...registerField("age")} />
+            </div>
+            <div className="mt-4">
+              {!isEditing ? (
+                <>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    Редактировать
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    className="btn btn-success me-2"
+                    onClick={handleEdit}
+                    disabled={form.loading}
+                  >
+                    {form.loading ? "Сохранение..." : "Сохранить"}
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setIsEditing(false)}
+                    disabled={form.loading}
+                  >
+                    Отмена
+                  </button>
+                </>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -5,7 +5,6 @@ import FeedbackCreateForm from "../components/FeedbackCreateForm";
 import PurchaseCard, {
   type PurchaseWithFilm,
 } from "../components/PurchaseCard";
-import Fallback from "../components/shared/Fallback";
 import { useQuery } from "../hooks/query";
 import { CONFIG } from "../constants/config";
 
@@ -38,22 +37,26 @@ export default function UserProfilePage() {
     <div className="min-vh-100 bg-dark text-light p-4">
       <EditProfileForm />
       <div className="mb-4">
-        <Fallback loading={isPurchasesLoading}>
-          <h2 className="text-primary mb-3">История покупок</h2>
-          {purchases?.length === 0 ? (
-            <p>У вас пока нет покупок 🎟️</p>
-          ) : (
-            purchases?.map((purchase) => (
-              <>
-                <PurchaseCard purchase={purchase} />
-                <FeedbackCreateForm
-                  filmId={purchase.filmId}
-                  onCreate={() => refetchPurchases()}
-                />
-              </>
-            ))
-          )}
-        </Fallback>
+        {isPurchasesLoading ? (
+          <div>Загружаем</div>
+        ) : (
+          <>
+            <h2 className="text-primary mb-3">История покупок</h2>
+            {purchases?.length === 0 ? (
+              <p>У вас пока нет покупок 🎟️</p>
+            ) : (
+              purchases?.map((purchase) => (
+                <>
+                  <PurchaseCard purchase={purchase} />
+                  <FeedbackCreateForm
+                    filmId={purchase.filmId}
+                    onCreate={() => refetchPurchases()}
+                  />
+                </>
+              ))
+            )}
+          </>
+        )}
       </div>
     </div>
   );
